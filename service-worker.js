@@ -1,4 +1,4 @@
-const CACHE_NAME = 'gymbn-v102';
+const CACHE_NAME = 'gymbn-v103';
 
 const PRECACHE_URLS = [
   './',
@@ -23,6 +23,7 @@ const PRECACHE_URLS = [
   './js/shared/catalogMatch.js',
   './js/roster/rosterUi.js',
   './js/admin/adminCloud.js',
+  './js/admin/broadcastHistory.js',
   './js/admin/coachRoster.js',
   './js/admin/exerciseCatalog.js',
   './js/admin/targetRegions.js',
@@ -55,6 +56,8 @@ const PRECACHE_URLS = [
   './js/components/notificationBell.js',
   './icons/icon-192.png',
   './icons/icon-512.png',
+  './icons/icon-maskable-192.png',
+  './icons/icon-maskable-512.png',
 ];
 
 self.addEventListener('install', (event) => {
