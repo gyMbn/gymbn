@@ -36,7 +36,7 @@ function renderLoading() {
   viewRoot.innerHTML = `
     <div class="auth-screen">
       <div class="auth-card">
-        <div class="auth-title">Gym Takip — Admin</div>
+        <div class="auth-title">gyMbn — Admin</div>
         <p class="auth-loading">Yükleniyor…</p>
       </div>
     </div>
@@ -45,7 +45,7 @@ function renderLoading() {
 
 function renderLogin() {
   renderLoginForm(viewRoot, {
-    title: 'Gym Takip — Admin',
+    title: 'gyMbn — Admin',
     onSubmit: (email, password) => adminLogin(email, password),
     onResetPassword: (email) => adminResetPassword(email),
   });
@@ -55,7 +55,7 @@ function renderAccessDenied() {
   viewRoot.innerHTML = `
     <div class="auth-screen">
       <div class="auth-card">
-        <div class="auth-title">Gym Takip — Admin</div>
+        <div class="auth-title">gyMbn — Admin</div>
         <p class="auth-error">Bu hesabın admin yetkisi yok.</p>
         <button type="button" class="btn btn-ghost btn-block" id="signout-btn">Çıkış Yap</button>
       </div>

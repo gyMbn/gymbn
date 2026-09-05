@@ -24,7 +24,7 @@ function showLoadingScreen() {
   viewRoot().innerHTML = `
     <div class="auth-screen">
       <div class="auth-card">
-        <div class="auth-title">Gym Takip</div>
+        <div class="auth-title">gyMbn</div>
         <p class="auth-loading">Yükleniyor…</p>
       </div>
     </div>
@@ -35,7 +35,7 @@ function showLoginScreen() {
   viewRoot().innerHTML = `
     <div class="auth-screen">
       <div class="auth-card">
-        <div class="auth-title">Gym Takip</div>
+        <div class="auth-title">gyMbn</div>
         <input type="email" id="auth-email" placeholder="E-posta" autocomplete="username">
         <input type="password" id="auth-password" placeholder="Şifre" autocomplete="current-password">
         <button type="button" class="btn btn-primary btn-block" id="auth-submit">Giriş Yap</button>

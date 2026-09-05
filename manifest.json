@@ -1,6 +1,6 @@
 {
-  "name": "Gym Takip",
-  "short_name": "Gym Takip",
+  "name": "gyMbn - Muscle Building Network",
+  "short_name": "gyMbn",
   "description": "Haftalık antrenman programı ve gerçek performans takibi",
   "start_url": "./",
   "scope": "./",

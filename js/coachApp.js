@@ -38,7 +38,7 @@ function renderLoading() {
   viewRoot.innerHTML = `
     <div class="auth-screen">
       <div class="auth-card">
-        <div class="auth-title">Gym Takip — Hoca</div>
+        <div class="auth-title">gyMbn — Hoca</div>
         <p class="auth-loading">Yükleniyor…</p>
       </div>
     </div>
@@ -47,7 +47,7 @@ function renderLoading() {
 
 function renderLogin() {
   renderLoginForm(viewRoot, {
-    title: 'Gym Takip — Hoca',
+    title: 'gyMbn — Hoca',
     onSubmit: (email, password) => coachLogin(email, password),
     onResetPassword: (email) => coachResetPassword(email),
   });
@@ -57,7 +57,7 @@ function renderAccessDenied() {
   viewRoot.innerHTML = `
     <div class="auth-screen">
       <div class="auth-card">
-        <div class="auth-title">Gym Takip — Hoca</div>
+        <div class="auth-title">gyMbn — Hoca</div>
         <p class="auth-error">Bu hesabın hoca yetkisi yok.</p>
         <button type="button" class="btn btn-ghost btn-block" id="signout-btn">Çıkış Yap</button>
       </div>

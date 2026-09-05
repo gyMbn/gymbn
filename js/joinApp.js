@@ -43,7 +43,7 @@ function renderMessage(text, isError) {
   viewRoot.innerHTML = `
     <div class="auth-screen">
       <div class="auth-card">
-        <div class="auth-title">Gym Takip</div>
+        <div class="auth-title">gyMbn</div>
         <p class="${isError ? 'auth-error' : 'auth-loading'}">${escapeHtml(text)}</p>
       </div>
     </div>
@@ -55,7 +55,7 @@ function renderJoinForm(role, token, invite) {
   viewRoot.innerHTML = `
     <div class="auth-screen">
       <div class="auth-card">
-        <div class="auth-title">Gym Takip</div>
+        <div class="auth-title">gyMbn</div>
         <p class="auth-loading">${escapeHtml(invite.displayName)} olarak (${roleLabel}) katılıyorsun. Hesabını oluşturmak için e-posta ve şifre belirle.</p>
         <input type="email" id="join-email" placeholder="E-posta" autocomplete="username">
         <input type="password" id="join-password" placeholder="Şifre (en az 6 karakter)" autocomplete="new-password">
