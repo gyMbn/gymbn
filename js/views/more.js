@@ -104,8 +104,19 @@ export function render(container) {
     });
   });
 
-  container.querySelector('#signout-btn').addEventListener('click', () => {
-    signOutUser();
+  const signoutBtn = container.querySelector('#signout-btn');
+  signoutBtn.addEventListener('click', () => {
+    // Çıkış işlemi bitmeden telefon kapatılırsa (force-close), oturum silinmemiş
+    // olarak kalıp bir sonraki açılışta geri gelebiliyor — bu yüzden buton,
+    // signOut() gerçekten tamamlanıp giriş ekranı gelene kadar "bekle" diyor.
+    signoutBtn.disabled = true;
+    signoutBtn.textContent = 'Çıkış yapılıyor…';
+    signOutUser().catch((err) => {
+      console.error('Çıkış yapılamadı', err);
+      alert('Çıkış yapılamadı, internet bağlantını kontrol edip tekrar dene.');
+      signoutBtn.disabled = false;
+      signoutBtn.textContent = 'Çıkış Yap';
+    });
   });
 
   const deleteBtn = container.querySelector('#delete-account-btn');
