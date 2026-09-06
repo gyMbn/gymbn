@@ -1,0 +1,12 @@
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.gymbn.twa",
+      "sha256_cert_fingerprints": [
+        "59:64:D9:64:E9:AC:9C:B3:B8:11:02:18:29:76:B0:29:3F:67:84:BB:B0:4A:28:A8:A6:C8:04:28:D0:B2:68:4F"
+      ]
+    }
+  }
+]
