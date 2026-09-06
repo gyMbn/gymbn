@@ -59,10 +59,17 @@ service cloud.firestore {
     match /coaches/{coachUid} {
       allow get: if isSignedIn() && (request.auth.uid == coachUid || isMyCoach(coachUid));
       allow list: if isAdmin();
+      // NOT: 'pending' değil 'claimed'e (ve claimedUid'in BENİM olduğuna) bakıyoruz,
+      // getAfter() ile — yani bu create'in, coachInvites'ı claim'e geçiren
+      // tx.update ile AYNI transaction/batch içinde gitmesi ZORUNLU. Tek başına
+      // (davete hiç dokunmadan) bir coaches/{uid} yazmaya çalışmak artık reddedilir
+      // — eskiden sadece "davet pending mi" bakıyordu, aynı hiç-tüketilmeyen
+      // davetle sınırsız sayıda hesap oluşturmaya açıktı (bkz. denetim notu).
       allow create: if isSignedIn()
         && request.auth.uid == coachUid
         && request.resource.data.inviteToken is string
-        && get(/databases/$(database)/documents/coachInvites/$(request.resource.data.inviteToken)).data.status == 'pending';
+        && getAfter(/databases/$(database)/documents/coachInvites/$(request.resource.data.inviteToken)).data.status == 'claimed'
+        && getAfter(/databases/$(database)/documents/coachInvites/$(request.resource.data.inviteToken)).data.claimedUid == request.auth.uid;
       // Admin'in "Egzersiz Kütüphanesi" toggle'ı için tek, dar bir istisna — SADECE
       // canManageCatalog alanını değiştirebiliyor, başka hiçbir alanı değiştiremez.
       allow update: if isAdmin() && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['canManageCatalog']);
@@ -93,12 +100,14 @@ service cloud.firestore {
       // (Firestore, resource.data üzerinden bu filtreyi fiilen zorunlu kılar); admin
       // hoca roster'ındaki öğrenci sayılarını görmek için hepsini sayabilir.
       allow list: if (isCoach() && resource.data.coachId == request.auth.uid) || isAdmin();
+      // Aynı getAfter() sıkılaştırması coaches'daki gibi — bkz. o yorum.
       allow create: if isSignedIn()
         && request.auth.uid == studentUid
         && request.resource.data.inviteToken is string
         && request.resource.data.coachId is string
-        && get(/databases/$(database)/documents/studentInvites/$(request.resource.data.inviteToken)).data.status == 'pending'
-        && get(/databases/$(database)/documents/studentInvites/$(request.resource.data.inviteToken)).data.coachId == request.resource.data.coachId;
+        && getAfter(/databases/$(database)/documents/studentInvites/$(request.resource.data.inviteToken)).data.status == 'claimed'
+        && getAfter(/databases/$(database)/documents/studentInvites/$(request.resource.data.inviteToken)).data.claimedUid == request.auth.uid
+        && getAfter(/databases/$(database)/documents/studentInvites/$(request.resource.data.inviteToken)).data.coachId == request.resource.data.coachId;
       allow update, delete: if false;
     }
 
