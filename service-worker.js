@@ -1,4 +1,4 @@
-const CACHE_NAME = 'gymbn-v111';
+const CACHE_NAME = 'gymbn-v112';
 
 const PRECACHE_URLS = [
   './',
@@ -8,6 +8,8 @@ const PRECACHE_URLS = [
   './join.html',
   './style.css',
   './manifest.json',
+  './manifest-admin.json',
+  './manifest-coach.json',
   './js/app.js',
   './js/router.js',
   './js/storage.js',
