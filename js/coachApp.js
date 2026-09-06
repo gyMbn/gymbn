@@ -50,6 +50,7 @@ function renderLogin() {
     title: 'gyMbn — Hoca',
     onSubmit: (email, password) => coachLogin(email, password),
     onResetPassword: (email) => coachResetPassword(email),
+    role: 'coach',
   });
 }
 

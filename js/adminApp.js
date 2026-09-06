@@ -48,6 +48,7 @@ function renderLogin() {
     title: 'gyMbn — Admin',
     onSubmit: (email, password) => adminLogin(email, password),
     onResetPassword: (email) => adminResetPassword(email),
+    role: 'admin',
   });
 }
 
