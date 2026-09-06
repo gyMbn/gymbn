@@ -1659,7 +1659,8 @@ a.list-item {
   .status-badge-pop .status-badge-path,
   .status-badge-ring,
   .day-complete-btn.just-completed,
-  .confetti-dot.playing {
+  .confetti-dot.playing,
+  .bulk-exercise-row.row-appear {
     animation: none !important;
   }
   .status-badge-pop .status-badge-path {
@@ -2090,6 +2091,17 @@ a.list-item {
 .bulk-exercise-row {
   border-top: 1px solid rgba(201, 161, 90, 0.4);
   padding-top: var(--space-3);
+}
+
+/* "+ Egzersiz Ekle" ile eklenen satıra özel — kopyalanan/yapıştırılan satırlar
+   bunu almıyor, sadece coach'un o an eklediği satır belirsin diye. */
+.bulk-exercise-row.row-appear {
+  animation: bulk-row-appear 0.2s ease-out both;
+}
+
+@keyframes bulk-row-appear {
+  0% { opacity: 0; transform: translateY(-8px); }
+  100% { opacity: 1; transform: translateY(0); }
 }
 
 .bulk-exercise-row-top {

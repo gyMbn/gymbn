@@ -729,6 +729,7 @@ function buildBlockCard(block, state, catalog, startOpen) {
     const ex = { name: '', parsedName: '', catalogId: null, weight: '', setCount: '', reps: '', rir: '', coachNote: '', lastTime: null };
     block.exercises.push(ex);
     const row = buildExerciseRow(ex, block, exList, catalog, updateBadge);
+    row.classList.add('row-appear');
     exList.appendChild(row);
     updateBadge();
     row.querySelector('.bulk-ex-name-select').focus();
