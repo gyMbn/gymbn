@@ -1,4 +1,4 @@
-const CACHE_NAME = 'gymbn-v105';
+const CACHE_NAME = 'gymbn-v106';
 
 const PRECACHE_URLS = [
   './',
@@ -53,6 +53,7 @@ const PRECACHE_URLS = [
   './js/components/picker.js',
   './js/components/libraryList.js',
   './js/components/confirmSheet.js',
+  './js/components/reauthSheet.js',
   './js/components/notificationBell.js',
   './icons/icon-192.png',
   './icons/icon-512.png',

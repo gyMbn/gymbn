@@ -53,6 +53,14 @@ function showLoginScreen() {
   const errorEl = document.getElementById('auth-error');
   const hintEl = document.getElementById('auth-hint');
 
+  // cloudSync.js'in deleteMyAccount()'ı, deleteUser() öncesi bunu set ediyor —
+  // hesap silinince onAuthStateChanged hemen bu ekranı gösterecek, bir kereliğine
+  // ipucu göster ve bayrağı temizle (sayfa yenilenince tekrar çıkmasın).
+  if (sessionStorage.getItem('gymbn_accountDeleted')) {
+    sessionStorage.removeItem('gymbn_accountDeleted');
+    showHint('Hesabın ve tüm verilerin silindi.');
+  }
+
   function showError(message) {
     hintEl.style.display = 'none';
     errorEl.textContent = message;

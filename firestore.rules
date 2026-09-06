@@ -73,7 +73,11 @@ service cloud.firestore {
       // Admin'in "Egzersiz Kütüphanesi" toggle'ı için tek, dar bir istisna — SADECE
       // canManageCatalog alanını değiştirebiliyor, başka hiçbir alanı değiştiremez.
       allow update: if isAdmin() && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['canManageCatalog']);
-      allow delete: if false;
+      // "Hesabımı sil" özelliği için: SADECE kendi kaydını silebilir. Bağlı
+      // öğrencileri varsa bu silinmez/etkilenmez — uygulama tarafı buna göre
+      // uyarı gösteriyor ama rules seviyesinde engellemiyoruz (bir koleksiyonda
+      // "başka hiçbir doküman bana referans vermiyor" diye sorgu yapılamıyor).
+      allow delete: if isSignedIn() && request.auth.uid == coachUid;
     }
 
     // ---- coachInvites: admin oluşturur, token bilen HERKES (auth'suz) 'get' edebilir
@@ -108,7 +112,10 @@ service cloud.firestore {
         && getAfter(/databases/$(database)/documents/studentInvites/$(request.resource.data.inviteToken)).data.status == 'claimed'
         && getAfter(/databases/$(database)/documents/studentInvites/$(request.resource.data.inviteToken)).data.claimedUid == request.auth.uid
         && getAfter(/databases/$(database)/documents/studentInvites/$(request.resource.data.inviteToken)).data.coachId == request.resource.data.coachId;
-      allow update, delete: if false;
+      allow update: if false;
+      // "Hesabımı sil" özelliği için: SADECE kendi kaydını silebilir (başka
+      // hiç kimse, koçu dahil, bir öğrenciyi bu yoldan silemiyor).
+      allow delete: if isSignedIn() && request.auth.uid == studentUid;
     }
 
     // ---- studentInvites: sadece daveti oluşturan hoca yönetir; token bilen herkes 'get' edebilir. ----

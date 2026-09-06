@@ -6,6 +6,9 @@ import {
   onAuthStateChanged,
   signInWithEmailAndPassword,
   sendPasswordResetEmail,
+  deleteUser,
+  reauthenticateWithCredential,
+  EmailAuthProvider,
 } from 'https://www.gstatic.com/firebasejs/12.17.1/firebase-auth.js';
 import {
   initializeFirestore,
@@ -14,6 +17,7 @@ import {
   doc,
   getDoc,
   setDoc,
+  deleteDoc,
   serverTimestamp,
   collection,
   query,
@@ -144,6 +148,52 @@ export async function isCurrentUserAlsoCoach() {
     console.error('Hoca yetkisi kontrol edilemedi', err);
     return false;
   }
+}
+
+// "Hesabımı sil" ekranının doğru uyarı metnini gösterebilmesi için: bu hesap
+// coach-yönetimli bir öğrenci mi, kendi de bir hoca mı (Kendi Antrenmanım'daki
+// gibi), yoksa bağımsız bireysel bir hesap mı — üçü birbirini dışlamıyor (bir
+// hoca kendi hesabıyla aynı zamanda başka bir hocaya bağlı öğrenci OLAMAZ ama
+// koda güvenmek yerine ikisini de gerçekten sorup dönüyoruz).
+export async function getAccountKind() {
+  const [studentRec, coach] = await Promise.all([
+    getMyStudentRecord(),
+    isCurrentUserAlsoCoach(),
+  ]);
+  return { isStudent: !!studentRec, isCoach: coach };
+}
+
+// Hesabı ve TÜM Firestore verisini kalıcı olarak siler, en son da Firebase Auth
+// hesabının kendisini siler (bu adım geri alınamaz). Sıra bilerek böyle: Firestore
+// temizliği auth hesabı hâlâ varken yapılıyor (auth silinirse kurallar artık
+// isSignedIn()'i geçemez, yarım kalan temizlik bir daha tamamlanamaz).
+// `password` verilmezse normal silme denenir; Firebase "requires-recent-login"
+// fırlatırsa (uzun süredir açık bir oturum) çağıran taraf kullanıcıdan şifresini
+// isteyip bu fonksiyonu password'lü tekrar çağırmalı — o zaman önce yeniden
+// doğrulama yapılıp silme işlemine öyle devam edilir.
+export async function deleteMyAccount(password) {
+  const user = auth.currentUser;
+  if (!user) throw new Error('no-user');
+
+  if (password) {
+    const credential = EmailAuthProvider.credential(user.email, password);
+    await reauthenticateWithCredential(user, credential);
+  }
+
+  const { isStudent, isCoach } = await getAccountKind();
+  await deleteDoc(doc(db, 'users', user.uid, 'data', 'main'));
+  if (isStudent) await deleteDoc(doc(db, 'students', user.uid));
+  if (isCoach) await deleteDoc(doc(db, 'coaches', user.uid));
+
+  // Bildirimlerin silinmesi ZORUNLU değil (alıcı zaten sadece kendi bildirimini
+  // görüyor, bu hesap silinince kimse onlara erişemez) — kapsamı gereksiz
+  // büyütmemek için bilerek atlandı.
+  // auth.js'in login ekranı bunu görüp bir kereliğine "hesabın silindi" ipucu
+  // gösteriyor — deleteUser() sonrası onAuthStateChanged hemen tetiklenip
+  // view-root'u login ekranına çevireceği için, o an başka bir yerde mesaj
+  // göstermenin bir anlamı yok.
+  sessionStorage.setItem('gymbn_accountDeleted', '1');
+  await deleteUser(user);
 }
 
 // bulkAdd.js için: hesap coach-yönetimli bir öğrenciyse (students/{uid} var)

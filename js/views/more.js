@@ -1,7 +1,8 @@
 import { exportBackup, importBackup } from '../storage.js';
 import { isRestTimerAutoResetEnabled, setRestTimerAutoResetEnabled, isExerciseMediaEnabled, setExerciseMediaEnabled, ICON_COACH } from '../util.js';
 import { confirmSheet } from '../components/confirmSheet.js';
-import { getMyCoachInfo } from '../cloudSync.js';
+import { reauthSheet } from '../components/reauthSheet.js';
+import { getMyCoachInfo, getAccountKind, deleteMyAccount } from '../cloudSync.js';
 
 export function render(container) {
   container.innerHTML = `
@@ -43,6 +44,14 @@ export function render(container) {
       <button type="button" class="btn btn-block" id="export-btn" style="margin-bottom: var(--space-3);">Yedeği Dışa Aktar (.json indir)</button>
       <label class="btn btn-block" for="import-file" style="display:block; text-align:center; cursor:pointer;">Yedekten Geri Yükle</label>
       <input type="file" id="import-file" accept="application/json" style="display:none;">
+    </div>
+
+    <div class="section-title">Tehlikeli Bölge</div>
+    <div class="card">
+      <p class="muted" style="margin-bottom: var(--space-3);">
+        Hesabını sildiğinde tüm antrenman verilerin ve hesabın kalıcı olarak silinir. Bu geri alınamaz.
+      </p>
+      <button type="button" class="btn btn-block btn-danger" id="delete-account-btn">Hesabımı Sil</button>
     </div>
   `;
 
@@ -88,6 +97,44 @@ export function render(container) {
       }
       location.reload();
     });
+  });
+
+  const deleteBtn = container.querySelector('#delete-account-btn');
+  deleteBtn.addEventListener('click', async () => {
+    const { isCoach } = await getAccountKind();
+    let message = 'Hesabın ve tüm antrenman verilerin kalıcı olarak silinecek. Bu geri alınamaz.';
+    if (isCoach) {
+      message += ' Bağlı öğrencilerinin kendi verileri etkilenmez, sadece "Hocan" satırında artık görünmezsin.';
+    }
+    if (!(await confirmSheet(message, { confirmLabel: 'Hesabımı Sil' }))) return;
+
+    deleteBtn.disabled = true;
+    deleteBtn.textContent = 'Siliniyor…';
+    try {
+      await deleteMyAccount();
+    } catch (err) {
+      if (err && err.code === 'auth/requires-recent-login') {
+        const password = await reauthSheet('Hesap silme gibi hassas bir işlem için önce şifreni tekrar girmen gerekiyor.');
+        if (!password) {
+          deleteBtn.disabled = false;
+          deleteBtn.textContent = 'Hesabımı Sil';
+          return;
+        }
+        try {
+          await deleteMyAccount(password);
+        } catch (retryErr) {
+          console.error('Hesap silinemedi (yeniden doğrulama sonrası)', retryErr);
+          alert('Hesap silinemedi: şifren yanlış olabilir ya da bir bağlantı sorunu var. Tekrar dene.');
+          deleteBtn.disabled = false;
+          deleteBtn.textContent = 'Hesabımı Sil';
+        }
+        return;
+      }
+      console.error('Hesap silinemedi', err);
+      alert('Hesap silinemedi, internet bağlantını kontrol edip tekrar dene.');
+      deleteBtn.disabled = false;
+      deleteBtn.textContent = 'Hesabımı Sil';
+    }
   });
 
   getMyCoachInfo().then((info) => {
