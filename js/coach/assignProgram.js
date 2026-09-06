@@ -669,6 +669,7 @@ function buildBlockCard(block, state, catalog, startOpen) {
         </div>
         <div class="block-date-info muted"></div>
         <div class="block-exercise-list"></div>
+        <button type="button" class="btn btn-block block-add-exercise-btn">+ Egzersiz Ekle</button>
       </div>
     </div>
   `;
@@ -677,6 +678,10 @@ function buildBlockCard(block, state, catalog, startOpen) {
   const body = card.querySelector('.block-acc-body');
   const headerTitle = card.querySelector('.block-acc-header-title');
   const headerSub = card.querySelector('.block-acc-header-sub');
+  const badge = card.querySelector('.block-acc-badge');
+  function updateBadge() {
+    badge.textContent = `${block.exercises.length} egzersiz`;
+  }
 
   // Başlık şeridi, gün tipi/tarih değiştikçe (aşağıdaki iki change listener'ında)
   // canlı güncelleniyor — kapalıyken bile hangi gün olduğu doğru görünsün diye.
@@ -711,13 +716,28 @@ function buildBlockCard(block, state, catalog, startOpen) {
 
   const exList = card.querySelector('.block-exercise-list');
   block.exercises.forEach((ex) => {
-    exList.appendChild(buildExerciseRow(ex, block, exList, catalog));
+    exList.appendChild(buildExerciseRow(ex, block, exList, catalog, updateBadge));
+  });
+
+  // "Önceki haftayı kopyala" ile gelen bir günde, o gün için hoca yeni bir
+  // egzersiz ekleyemiyordu (sadece kopyalanan satırların değerlerini
+  // değiştirebiliyordu) — kullanıcının kendi isteği. Yeni satır, yapıştırılan
+  // metinden hiç eşleşmemiş bir satırla AYNI boş/unresolved durumda başlıyor:
+  // hoca kataloktan seçmek ZORUNDA, serbest metin girişi yok (bkz. proje
+  // genelindeki "bağımsız hareket kalmamalı" ilkesi).
+  card.querySelector('.block-add-exercise-btn').addEventListener('click', () => {
+    const ex = { name: '', parsedName: '', catalogId: null, weight: '', setCount: '', reps: '', rir: '', coachNote: '', lastTime: null };
+    block.exercises.push(ex);
+    const row = buildExerciseRow(ex, block, exList, catalog, updateBadge);
+    exList.appendChild(row);
+    updateBadge();
+    row.querySelector('.bulk-ex-name-select').focus();
   });
 
   return card;
 }
 
-function buildExerciseRow(ex, block, exList, catalog) {
+function buildExerciseRow(ex, block, exList, catalog, onCountChange) {
   const row = document.createElement('div');
   row.className = 'bulk-exercise-row';
   const sortedCatalog = [...catalog].sort((a, b) => a.name.localeCompare(b.name, 'tr'));
@@ -726,7 +746,7 @@ function buildExerciseRow(ex, block, exList, catalog) {
   )).join('');
   const placeholderLabel = ex.catalogId
     ? '— eşleşme yok, seç —'
-    : `"${ex.parsedName || ''}" — eşleşme yok, seç`;
+    : (ex.parsedName ? `"${ex.parsedName}" — eşleşme yok, seç` : '— egzersiz seç —');
   const suggestion = ex.catalogId ? null : closestCatalogMatch(ex.parsedName, catalog);
   row.innerHTML = `
     <div class="bulk-exercise-row-top">
@@ -831,6 +851,7 @@ function buildExerciseRow(ex, block, exList, catalog) {
     const idx = Array.from(exList.children).indexOf(row);
     if (idx !== -1) block.exercises.splice(idx, 1);
     row.remove();
+    if (onCountChange) onCountChange();
   });
 
   return row;
