@@ -1,5 +1,5 @@
 import { getPayments, addPayment, deletePayment, getPaymentCycleStatus } from '../storage.js';
-import { formatDateLongTr, todayIso, ICON_TRASH } from '../util.js';
+import { escapeHtml, formatDateLongTr, todayIso, ICON_TRASH } from '../util.js';
 import { confirmSheet } from '../components/confirmSheet.js';
 
 export function render(container) {
@@ -72,10 +72,10 @@ export function render(container) {
       return;
     }
     listEl.innerHTML = payments.map((p) => `
-      <div class="list-item" data-id="${p.id}">
+      <div class="list-item" data-id="${escapeHtml(p.id)}">
         <div class="list-item-main">
           <div class="list-item-title">${formatDateLongTr(p.date)}</div>
-          ${p.amount ? `<div class="list-item-sub">${p.amount}</div>` : ''}
+          ${p.amount ? `<div class="list-item-sub">${escapeHtml(p.amount)}</div>` : ''}
         </div>
         <div class="list-item-actions">
           <button type="button" class="btn-icon danger delete-btn" aria-label="Sil">${ICON_TRASH}</button>
