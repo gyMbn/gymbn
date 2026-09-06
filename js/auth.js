@@ -93,7 +93,7 @@ function showLoginScreen() {
     resetBtn.textContent = 'Gönderiliyor…';
     errorEl.style.display = 'none';
     resetPassword(email)
-      .then(() => showHint('Sıfırlama maili gönderildi, gelen kutunu kontrol et.'))
+      .then(() => showHint('Sıfırlama maili gönderildi. Gelmezse spam/gereksiz klasörüne bak.'))
       .catch((err) => showError(resetErrorMessage(err)))
       .finally(() => {
         resetBtn.disabled = false;

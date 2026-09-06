@@ -70,7 +70,7 @@ export function renderLoginForm(container, { title, subtitle, onSubmit, onResetP
       resetBtn.textContent = 'Gönderiliyor…';
       errorEl.style.display = 'none';
       onResetPassword(email)
-        .then(() => showHint('Sıfırlama maili gönderildi, gelen kutunu kontrol et.'))
+        .then(() => showHint('Sıfırlama maili gönderildi. Gelmezse spam/gereksiz klasörüne bak.'))
         .catch((err) => showError(authErrorMessage(err)))
         .finally(() => {
           resetBtn.disabled = false;
