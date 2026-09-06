@@ -1,0 +1,149 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
+  <title>Gizlilik Politikası — gyMbn</title>
+  <meta name="description" content="gyMbn Gizlilik Politikası">
+  <meta name="theme-color" content="#121316">
+  <link rel="icon" href="./icons/icon-192.png">
+  <link rel="stylesheet" href="./style.css">
+  <style>
+    body.legal-page {
+      font-size: 16px;
+      line-height: 1.65;
+    }
+    .legal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      height: var(--header-h);
+      padding: 0 var(--space-4);
+      border-bottom: 1px solid var(--border);
+      position: sticky;
+      top: 0;
+      background: var(--bg);
+      z-index: 5;
+    }
+    .legal-header a {
+      color: var(--text-muted);
+      text-decoration: none;
+      font-size: 14px;
+    }
+    .legal-header a:hover { color: var(--text); }
+    .legal-title {
+      font-weight: 600;
+      letter-spacing: 0.02em;
+    }
+    .legal-title .accent { color: var(--primary); }
+    .legal-main {
+      max-width: 680px;
+      margin: 0 auto;
+      padding: var(--space-5) var(--space-4) 72px;
+    }
+    .legal-main h1 {
+      font-size: 26px;
+      font-weight: 700;
+      margin-bottom: var(--space-2);
+    }
+    .legal-updated {
+      color: var(--text-muted);
+      font-size: 13.5px;
+      margin-bottom: var(--space-5);
+    }
+    .legal-main h2 {
+      font-size: 17px;
+      font-weight: 600;
+      color: var(--primary);
+      margin: var(--space-5) 0 var(--space-2);
+    }
+    .legal-main p, .legal-main li {
+      color: var(--text);
+      font-size: 15px;
+      margin-bottom: var(--space-3);
+    }
+    .legal-main ul {
+      padding-left: 20px;
+      margin: 0 0 var(--space-3);
+    }
+    .legal-main strong { color: var(--text); font-weight: 600; }
+    .legal-note {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: var(--space-4);
+      margin: var(--space-3) 0;
+      font-size: 14px;
+      color: var(--text-muted);
+    }
+    .legal-contact {
+      display: inline-block;
+      margin-top: var(--space-2);
+      padding: var(--space-2) var(--space-4);
+      background: var(--surface-2);
+      border: 1px solid var(--border-strong);
+      border-radius: var(--radius-sm);
+      color: var(--primary);
+      text-decoration: none;
+      font-size: 14px;
+    }
+  </style>
+</head>
+<body class="legal-page">
+  <header class="legal-header">
+    <span class="legal-title">GY<span class="accent">MBN</span></span>
+    <a href="./index.html">← Uygulamaya dön</a>
+  </header>
+
+  <main class="legal-main">
+    <h1>Gizlilik Politikası</h1>
+    <p class="legal-updated">Son güncelleme: 6 Eylül 2026</p>
+
+    <p>Bu sayfa, <strong>gyMbn</strong> (antrenman takip ve koçluk yönetim uygulaması) kullanıcılarının verilerini nasıl topladığımızı, kullandığımızı ve koruduğumuzu açıklar. gyMbn; koçların sporcularının haftalık antrenman programlarını, performans verilerini ve ödeme takibini yönetmesi için tasarlanmış bir uygulamadır.</p>
+
+    <h2>Topladığımız veriler</h2>
+    <ul>
+      <li><strong>Hesap bilgileri:</strong> e-posta adresin ve şifren. Şifreni hiçbir zaman düz metin olarak görmüyoruz ya da saklamıyoruz — bu, kimlik doğrulama altyapımız olan Google Firebase tarafından geri döndürülemez şekilde şifrelenip saklanıyor.</li>
+      <li><strong>Antrenman verileri:</strong> haftalık program, egzersiz isimleri, hedeflenen ve gerçekleşen set/tekrar/ağırlık/RIR değerleri, notlar.</li>
+      <li><strong>Vücut ölçümleri (varsa):</strong> koçun kaydettiği boy, kilo, göğüs/bel/kol/bacak gibi ölçüm değerleri ve tarihleri.</li>
+      <li><strong>Ödeme notları:</strong> koçun, sporcudan aldığı elden/nakit ödemeleri takip etmek için girdiği tarih ve tutar bilgisi. <strong>Bu bir ödeme işlemi değildir</strong> — gyMbn hiçbir kredi kartı, banka hesabı ya da gerçek bir finansal işlem bilgisi toplamaz, işlemez ya da saklamaz; sadece koçun kendi elle tuttuğu bir not defterinin dijital hali.</li>
+      <li><strong>Uygulama içi bildirimler:</strong> koç ile sporcu arasında (örn. "antrenmanın başladı/tamamlandı", "yeni program atandı") oluşan bildirim kayıtları.</li>
+    </ul>
+    <p>gyMbn hiçbir reklam kimliği, konum verisi ya da cihaz parmak izi toplamaz. Uygulamada hiçbir reklam ağı ya da analitik/izleme SDK'sı bulunmaz.</p>
+
+    <h2>Verileri nasıl kullanıyoruz</h2>
+    <p>Topladığımız her veri, yalnızca uygulamanın temel işlevini (antrenman takibi ve koçluk yönetimi) sağlamak için kullanılır. Verilerin satışı, reklam amaçlı kullanımı ya da pazarlama amacıyla üçüncü taraflarla paylaşımı söz konusu değildir.</p>
+
+    <h2>Kiminle paylaşıyoruz</h2>
+    <ul>
+      <li><strong>Google Firebase:</strong> verilerin barındırıldığı, kimlik doğrulamanın yapıldığı altyapı sağlayıcımız. Google'ın kendi gizlilik politikası bu veriler için de geçerlidir.</li>
+      <li><strong>YouTube:</strong> bazı egzersizlerde koçun eklediği video linkleri, YouTube'un kendi (gizlilik-geliştirilmiş) oynatıcısı üzerinden gösterilir. Bu sadece bir video linki/gömme işlemidir — gyMbn bu videoyla ilgili ekstra bir veri paylaşımı yapmaz.</li>
+    </ul>
+    <p>Bunların dışında hiçbir üçüncü tarafla veri paylaşılmaz.</p>
+
+    <h2>Kim, kimin verisini görebilir</h2>
+    <p>gyMbn, rol tabanlı bir erişim modeli kullanır ve bu sunucu tarafında (Firestore güvenlik kuralları ile) zorunlu kılınır — istemci tarafındaki bir ayar değil:</p>
+    <ul>
+      <li>Bir sporcu yalnızca kendi verisini görür.</li>
+      <li>Bir koç yalnızca kendisine atanmış sporcuların verisini görür — başka bir koçun sporcularına erişemez.</li>
+      <li>Bir admin, koç/sporcu listesini ve paylaşılan egzersiz kütüphanesini yönetir; bireysel sporcu antrenman verilerine erişimi yoktur.</li>
+    </ul>
+
+    <h2>Veri güvenliği</h2>
+    <p>Tüm veri trafiği HTTPS üzerinden şifrelenir. Şifreler hiçbir zaman düz metin olarak görülmez ya da saklanmaz. Erişim izinleri, her isteğin sunucu tarafında (istemciye güvenilmeden) kontrol edildiği güvenlik kurallarıyla sağlanır.</p>
+
+    <h2>Verilerinin silinmesi</h2>
+    <div class="legal-note">Hesabının ve verilerinin silinmesini istersen, aşağıdaki e-posta adresinden bizimle iletişime geç. Talebin makul bir süre içinde (genellikle birkaç iş günü) işleme alınır ve verilerin kalıcı olarak silinir.</div>
+    <a class="legal-contact" href="mailto:gymbn.app@gmail.com">gymbn.app@gmail.com</a>
+
+    <h2>Çocukların gizliliği</h2>
+    <p>gyMbn çocuklara yönelik bir uygulama değildir ve bilerek 13 yaşından küçük kullanıcılardan veri toplamaz.</p>
+
+    <h2>Bu politikadaki değişiklikler</h2>
+    <p>Bu politika güncellenirse, değişiklik bu sayfada yayınlanır ve üstteki "son güncelleme" tarihi güncellenir.</p>
+
+    <h2>İletişim</h2>
+    <p>Soruların için: <a class="legal-contact" href="mailto:gymbn.app@gmail.com">gymbn.app@gmail.com</a></p>
+  </main>
+</body>
+</html>
