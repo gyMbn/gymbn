@@ -5,6 +5,7 @@ import {
   browserLocalPersistence,
   onAuthStateChanged,
   signInWithEmailAndPassword,
+  signOut,
   sendPasswordResetEmail,
   deleteUser,
   reauthenticateWithCredential,
@@ -73,6 +74,10 @@ export function login(email, password) {
 
 export function resetPassword(email) {
   return sendPasswordResetEmail(auth, email);
+}
+
+export function signOutUser() {
+  return signOut(auth);
 }
 
 /**

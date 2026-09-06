@@ -2,7 +2,7 @@ import { exportBackup, importBackup } from '../storage.js';
 import { isRestTimerAutoResetEnabled, setRestTimerAutoResetEnabled, isExerciseMediaEnabled, setExerciseMediaEnabled, ICON_COACH } from '../util.js';
 import { confirmSheet } from '../components/confirmSheet.js';
 import { reauthSheet } from '../components/reauthSheet.js';
-import { getMyCoachInfo, getAccountKind, deleteMyAccount } from '../cloudSync.js';
+import { getMyCoachInfo, getAccountKind, deleteMyAccount, signOutUser } from '../cloudSync.js';
 
 export function render(container) {
   container.innerHTML = `
@@ -44,6 +44,11 @@ export function render(container) {
       <button type="button" class="btn btn-block" id="export-btn" style="margin-bottom: var(--space-3);">Yedeği Dışa Aktar (.json indir)</button>
       <label class="btn btn-block" for="import-file" style="display:block; text-align:center; cursor:pointer;">Yedekten Geri Yükle</label>
       <input type="file" id="import-file" accept="application/json" style="display:none;">
+    </div>
+
+    <div class="section-title">Hesap</div>
+    <div class="card">
+      <button type="button" class="btn btn-block btn-ghost" id="signout-btn">Çıkış Yap</button>
     </div>
 
     <div class="section-title">Tehlikeli Bölge</div>
@@ -97,6 +102,10 @@ export function render(container) {
       }
       location.reload();
     });
+  });
+
+  container.querySelector('#signout-btn').addEventListener('click', () => {
+    signOutUser();
   });
 
   const deleteBtn = container.querySelector('#delete-account-btn');
