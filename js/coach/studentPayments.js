@@ -1,6 +1,6 @@
 import { getStudent, getStudentAppState, setStudentAppState } from './coachCloud.js';
 import { cycleStatus, sortedPayments } from './paymentCycle.js';
-import { escapeHtml, formatDateLongTr, todayIso, ICON_TRASH } from '../util.js';
+import { escapeHtml, formatDateLongTr, monthLabelTr, todayIso, ICON_TRASH } from '../util.js';
 import { confirmSheet } from '../components/confirmSheet.js';
 
 function uid() {
@@ -44,6 +44,13 @@ function renderErrorScreen(container, studentUid, message) {
   `;
 }
 
+// monthLabelTr "Ağustos 2026" döndürüyor (bkz. util.js) — burada yıl değil,
+// sadece ay adı lazım. Türkçe ay adları hep tek kelime (Ocak, Şubat, ...,
+// Aralık), o yüzden ilk kelimeyi almak güvenli.
+function monthNameOnly(iso) {
+  return monthLabelTr(iso).split(' ')[0];
+}
+
 function buildCycleCard(payments) {
   const cycle = cycleStatus(payments);
   if (!cycle.hasPayment) {
@@ -54,21 +61,22 @@ function buildCycleCard(payments) {
       </div>
     `;
   }
-  if (cycle.overdue) {
+  // Ödeme günü yaklaştıysa/geldiyse/geçtiyse: pasif bir gün sayacı yerine
+  // doğrudan "alındı mı?" diye soruyoruz — hoca "evet"e bastığında bugünün
+  // tarihiyle ödeme kaydediliyor ve döngü bir sonraki aya geçiyor (erken
+  // ödense bile, bkz. paymentCycle.js'teki nextOccurrenceAfter düzeltmesi).
+  if (cycle.countdown || cycle.overdue) {
+    const monthName = monthNameOnly(cycle.dueDate);
     return `
       <div class="stat-card">
-        <div class="stat-label">Ödeme Günü</div>
-        <div class="stat-value">Ödeme zamanı geldi <span class="badge badge-danger">Gecikti</span></div>
-        <div class="stat-detail">Ödeme günü: ${formatDateLongTr(cycle.dueDate)} (${cycle.daysSinceDue} gün geçti)</div>
-      </div>
-    `;
-  }
-  if (cycle.countdown) {
-    return `
-      <div class="stat-card">
-        <div class="stat-label">Ödeme Günü</div>
-        <div class="stat-value">${cycle.daysUntilDue === 0 ? 'Bugün' : `${cycle.daysUntilDue} gün kaldı`}</div>
-        <div class="stat-detail">Sıradaki ödeme: ${formatDateLongTr(cycle.dueDate)}</div>
+        <div class="stat-label">${monthName} Ödemesi</div>
+        <div class="confirm-cycle-status${cycle.overdue ? ' is-overdue' : ''}">
+          ${monthName} ödemesi alındı mı?${cycle.overdue ? ' <span class="badge badge-danger">Gecikti</span>' : ''}
+        </div>
+        <div class="confirm-cycle-actions">
+          <button type="button" class="btn btn-primary" id="mark-paid-btn">✓ Evet, Alındı</button>
+          <button type="button" class="btn btn-ghost" id="mark-unpaid-btn">Henüz Değil</button>
+        </div>
       </div>
     `;
   }
@@ -77,6 +85,23 @@ function buildCycleCard(payments) {
       <div class="stat-label">Ödeme Günü</div>
       <div class="stat-value">${formatDateLongTr(cycle.dueDate)}</div>
       <div class="stat-detail">Sabit ödeme günü: ${cycle.anchorDay}</div>
+    </div>
+  `;
+}
+
+// "Evet, Alındı"ya basılınca cycle kartının yerine kısa süreliğine gösterilen
+// onay — [[feedback_motion_feedback_principle]]: her etkileşimin görünür bir
+// tepkisi olmalı, sessizce bir sonraki döngüye atlamak yerine.
+function buildJustMarkedCard(monthName, dateIso) {
+  return `
+    <div class="stat-card">
+      <div class="confirm-just-marked">
+        <div class="check-badge">✓</div>
+        <div>
+          <div style="font-weight:700;">${monthName} ödemesi alındı</div>
+          <div class="stat-detail" style="margin-top:0;">${formatDateLongTr(dateIso)} olarak kaydedildi</div>
+        </div>
+      </div>
     </div>
   `;
 }
@@ -134,6 +159,36 @@ function wireScreen(container, studentUid, state) {
     summaryEl.innerHTML = buildCycleCard(state.payments);
     listEl.innerHTML = buildPaymentList(state.payments);
     wireDeleteButtons();
+    wireCycleCard();
+  }
+
+  // "Henüz Değil" butonuna bilerek handler yok: "hayır" zaten mevcut durum,
+  // değiştirecek/kaydedilecek bir şey yok — sadece butonun kendi .btn:active
+  // basma tepkisi yeterli.
+  function wireCycleCard() {
+    const markPaidBtn = summaryEl.querySelector('#mark-paid-btn');
+    if (!markPaidBtn) return;
+    const markUnpaidBtn = summaryEl.querySelector('#mark-unpaid-btn');
+    markPaidBtn.addEventListener('click', async () => {
+      const cycle = cycleStatus(state.payments);
+      const monthName = monthNameOnly(cycle.dueDate);
+      markPaidBtn.disabled = true;
+      if (markUnpaidBtn) markUnpaidBtn.disabled = true;
+      const payment = { id: uid(), date: todayIso(), amount: null, note: '' };
+      state.payments.push(payment);
+      try {
+        await setStudentAppState(studentUid, state);
+        summaryEl.innerHTML = buildJustMarkedCard(monthName, payment.date);
+        setTimeout(refresh, 900);
+      } catch (err) {
+        console.error('Ödeme kaydedilemedi', err);
+        alert('Ödeme kaydedilemedi, internet bağlantını kontrol edip tekrar dene.');
+        const idx = state.payments.findIndex((p) => p.id === payment.id);
+        if (idx !== -1) state.payments.splice(idx, 1);
+        markPaidBtn.disabled = false;
+        if (markUnpaidBtn) markUnpaidBtn.disabled = false;
+      }
+    });
   }
 
   function wireDeleteButtons() {
@@ -158,6 +213,7 @@ function wireScreen(container, studentUid, state) {
     });
   }
   wireDeleteButtons();
+  wireCycleCard();
 
   form.addEventListener('submit', async (e) => {
     e.preventDefault();

@@ -1710,7 +1710,8 @@ a.list-item {
   .status-badge-ring,
   .day-complete-btn.just-completed,
   .confetti-dot.playing,
-  .bulk-exercise-row.row-appear {
+  .bulk-exercise-row.row-appear,
+  .confirm-just-marked {
     animation: none !important;
   }
   .status-badge-pop .status-badge-path {
@@ -1834,6 +1835,53 @@ a.list-item {
   font-size: 13px;
   color: var(--text-muted);
   margin-top: 4px;
+}
+
+.confirm-cycle-status {
+  font-size: 15px;
+  color: var(--text);
+  margin-bottom: var(--space-3);
+}
+
+.confirm-cycle-status.is-overdue {
+  color: var(--danger);
+  font-weight: 600;
+}
+
+.confirm-cycle-actions {
+  display: flex;
+  gap: var(--space-2);
+}
+
+.confirm-cycle-actions .btn {
+  flex: 1;
+}
+
+.confirm-just-marked {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  animation: confirm-pop 0.35s ease-out both;
+}
+
+.confirm-just-marked .check-badge {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--success);
+  color: #0d1a12;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 15px;
+  flex-shrink: 0;
+}
+
+@keyframes confirm-pop {
+  0% { opacity: 0; transform: scale(0.7); }
+  60% { transform: scale(1.08); }
+  100% { opacity: 1; transform: scale(1); }
 }
 
 

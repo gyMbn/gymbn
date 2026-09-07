@@ -15,18 +15,19 @@ function anchorDateFor(anchorDay, year, month) {
   return new Date(year, month, clampDayToMonth(year, month, anchorDay));
 }
 
-// `date`'ten SONRAKİ ilk milad günü — `date`'in kendisi milad günüyse bir
-// sonraki aya geçiyor ("az önce ödedin, sıradaki ödeme gelecek ay" demek).
+// Bir ödeme, kendi ayının milad gününü KAPATIR — o gün gelmeden önce (erken),
+// tam o gün, ya da geçtikten sonra (geç) yapılmış olması fark etmiyor. Sıradaki
+// ödeme her zaman BİR SONRAKİ ayın milad günü. Eskiden bu sadece milad günü
+// geçmişse/tam o günse bir sonraki aya atlıyordu — erken ödemede (ör. milad 5,
+// ödeme 3'ünde) o ayın miladını hâlâ "önümüzde" gösteriyordu, "erken ödedim,
+// hoca işaretledi ama uygulama hâlâ bu ayın ödemesini bekliyormuş gibi
+// davranıyor" diye bildirilen gerçek bir kullanıcı şikayetiydi. storage.js'teki
+// AYNI mantığın izole kopyası — biri değişirse ikisi de değişmeli.
 function nextOccurrenceAfter(anchorDay, date) {
   let year = date.getFullYear();
-  let month = date.getMonth();
-  let candidate = anchorDateFor(anchorDay, year, month);
-  if (candidate.getTime() <= date.getTime()) {
-    month += 1;
-    if (month > 11) { month = 0; year += 1; }
-    candidate = anchorDateFor(anchorDay, year, month);
-  }
-  return candidate;
+  let month = date.getMonth() + 1;
+  if (month > 11) { month = 0; year += 1; }
+  return anchorDateFor(anchorDay, year, month);
 }
 
 function toIso(date) {
