@@ -51,57 +51,43 @@ function monthNameOnly(iso) {
   return monthLabelTr(iso).split(' ')[0];
 }
 
-function buildCycleCard(payments) {
+// Hiç ödeme kaydı yokken gösterilen tek durum — varsa (hangi aşamada olursa
+// olsun) bekleyen döngü artık ayrı bir kartta değil, listenin en üstünde bir
+// satır olarak gösteriliyor (bkz. buildPendingRow).
+function buildStatCard(payments) {
   const cycle = cycleStatus(payments);
-  if (!cycle.hasPayment) {
-    return `
-      <div class="stat-card">
-        <div class="stat-label">Ödeme</div>
-        <div class="stat-detail">Henüz ödeme kaydı yok.</div>
-      </div>
-    `;
-  }
-  // Ödeme günü yaklaştıysa/geldiyse/geçtiyse: pasif bir gün sayacı yerine
-  // doğrudan "alındı mı?" diye soruyoruz — hoca "evet"e bastığında bugünün
-  // tarihiyle ödeme kaydediliyor ve döngü bir sonraki aya geçiyor (erken
-  // ödense bile, bkz. paymentCycle.js'teki nextOccurrenceAfter düzeltmesi).
-  if (cycle.countdown || cycle.overdue) {
-    const monthName = monthNameOnly(cycle.dueDate);
-    return `
-      <div class="stat-card">
-        <div class="stat-label">${monthName} Ödemesi</div>
-        <div class="confirm-cycle-status${cycle.overdue ? ' is-overdue' : ''}">
-          ${monthName} ödemesi alındı mı?${cycle.overdue ? ' <span class="badge badge-danger">Gecikti</span>' : ''}
-        </div>
-        <div class="confirm-cycle-actions">
-          <button type="button" class="btn btn-primary" id="mark-paid-btn">✓ Evet, Alındı</button>
-          <button type="button" class="btn btn-ghost" id="mark-unpaid-btn">Henüz Değil</button>
-        </div>
-      </div>
-    `;
-  }
+  if (cycle.hasPayment) return '';
   return `
     <div class="stat-card">
-      <div class="stat-label">Ödeme Günü</div>
-      <div class="stat-value">${formatDateLongTr(cycle.dueDate)}</div>
-      <div class="stat-detail">Sabit ödeme günü: ${cycle.anchorDay}</div>
+      <div class="stat-label">Ödeme</div>
+      <div class="stat-detail">Henüz ödeme kaydı yok.</div>
     </div>
   `;
 }
 
-// "Evet, Alındı"ya basılınca cycle kartının yerine kısa süreliğine gösterilen
-// onay — [[feedback_motion_feedback_principle]]: her etkileşimin görünür bir
-// tepkisi olmalı, sessizce bir sonraki döngüye atlamak yerine.
-function buildJustMarkedCard(monthName, dateIso) {
+// Listenin en üstünde, henüz alınmamış döngüyü temsil eden kesikli-çerçeveli
+// satır. Tıklanınca (bkz. wirePendingRow) confirmSheet ile "alındı mı?"
+// soruluyor — "evet" bugünün tarihiyle ödeme kaydediyor ve döngü bir sonraki
+// aya geçiyor (erken ödense bile, bkz. paymentCycle.js'teki
+// nextOccurrenceAfter düzeltmesi).
+function buildPendingRow(payments) {
+  const cycle = cycleStatus(payments);
+  if (!cycle.hasPayment) return '';
+  let subLabel;
+  if (cycle.overdue) {
+    subLabel = `Gecikti · ${cycle.daysSinceDue} gün geçti`;
+  } else if (cycle.daysUntilDue === 0) {
+    subLabel = 'Bekleniyor · Bugün';
+  } else {
+    subLabel = `Bekleniyor · ${cycle.daysUntilDue} gün ${cycle.countdown ? 'kaldı' : 'var'}`;
+  }
   return `
-    <div class="stat-card">
-      <div class="confirm-just-marked">
-        <div class="check-badge">✓</div>
-        <div>
-          <div style="font-weight:700;">${monthName} ödemesi alındı</div>
-          <div class="stat-detail" style="margin-top:0;">${formatDateLongTr(dateIso)} olarak kaydedildi</div>
-        </div>
+    <div class="list-item pending-payment-row${cycle.overdue ? ' is-overdue' : ''}" id="pending-payment-row">
+      <div class="list-item-main">
+        <div class="list-item-title">${formatDateLongTr(cycle.dueDate)}</div>
+        <div class="list-item-sub">${subLabel}</div>
       </div>
+      <span class="chevron">›</span>
     </div>
   `;
 }
@@ -109,7 +95,7 @@ function buildJustMarkedCard(monthName, dateIso) {
 function buildPaymentList(payments) {
   const sorted = sortedPayments(payments);
   if (!sorted.length) return '<p class="empty-state">Henüz ödeme kaydı yok.</p>';
-  return sorted.map((p) => `
+  const pastHtml = sorted.map((p) => `
     <div class="list-item" data-id="${escapeHtml(p.id)}">
       <div class="list-item-main">
         <div class="list-item-title">${formatDateLongTr(p.date)}</div>
@@ -120,6 +106,7 @@ function buildPaymentList(payments) {
       </div>
     </div>
   `).join('');
+  return buildPendingRow(payments) + pastHtml;
 }
 
 function renderScreen(container, studentUid, student, state) {
@@ -129,7 +116,7 @@ function renderScreen(container, studentUid, student, state) {
       <h2 class="view-title">${escapeHtml(student.displayName)}</h2>
       <span></span>
     </div>
-    <div id="cycle-summary">${buildCycleCard(state.payments)}</div>
+    <div id="cycle-summary">${buildStatCard(state.payments)}</div>
     <form class="card" id="add-payment-form">
       <div class="form-row">
         <div class="field">
@@ -143,7 +130,7 @@ function renderScreen(container, studentUid, student, state) {
       </div>
       <button type="submit" class="btn btn-primary btn-block">+ Ödeme Ekle</button>
     </form>
-    <div class="section-title">Geçmiş Ödemeler</div>
+    <div class="section-title">Ödemeler</div>
     <div class="list" id="payment-list">${buildPaymentList(state.payments)}</div>
   `;
 
@@ -156,37 +143,36 @@ function wireScreen(container, studentUid, state) {
   const listEl = container.querySelector('#payment-list');
 
   function refresh() {
-    summaryEl.innerHTML = buildCycleCard(state.payments);
+    summaryEl.innerHTML = buildStatCard(state.payments);
     listEl.innerHTML = buildPaymentList(state.payments);
     wireDeleteButtons();
-    wireCycleCard();
+    wirePendingRow();
   }
 
-  // "Henüz Değil" butonuna bilerek handler yok: "hayır" zaten mevcut durum,
-  // değiştirecek/kaydedilecek bir şey yok — sadece butonun kendi .btn:active
-  // basma tepkisi yeterli.
-  function wireCycleCard() {
-    const markPaidBtn = summaryEl.querySelector('#mark-paid-btn');
-    if (!markPaidBtn) return;
-    const markUnpaidBtn = summaryEl.querySelector('#mark-unpaid-btn');
-    markPaidBtn.addEventListener('click', async () => {
+  function wirePendingRow() {
+    const row = listEl.querySelector('#pending-payment-row');
+    if (!row) return;
+    row.addEventListener('click', async () => {
       const cycle = cycleStatus(state.payments);
       const monthName = monthNameOnly(cycle.dueDate);
-      markPaidBtn.disabled = true;
-      if (markUnpaidBtn) markUnpaidBtn.disabled = true;
+      const confirmed = await confirmSheet(`${monthName} ödemesi alındı mı?`, {
+        confirmLabel: 'Evet, Alındı',
+        cancelLabel: 'Henüz Değil',
+        danger: false,
+      });
+      if (!confirmed) return;
+      row.style.pointerEvents = 'none';
       const payment = { id: uid(), date: todayIso(), amount: null, note: '' };
       state.payments.push(payment);
       try {
         await setStudentAppState(studentUid, state);
-        summaryEl.innerHTML = buildJustMarkedCard(monthName, payment.date);
-        setTimeout(refresh, 900);
+        refresh();
       } catch (err) {
         console.error('Ödeme kaydedilemedi', err);
         alert('Ödeme kaydedilemedi, internet bağlantını kontrol edip tekrar dene.');
         const idx = state.payments.findIndex((p) => p.id === payment.id);
         if (idx !== -1) state.payments.splice(idx, 1);
-        markPaidBtn.disabled = false;
-        if (markUnpaidBtn) markUnpaidBtn.disabled = false;
+        row.style.pointerEvents = '';
       }
     });
   }
@@ -213,7 +199,7 @@ function wireScreen(container, studentUid, state) {
     });
   }
   wireDeleteButtons();
-  wireCycleCard();
+  wirePendingRow();
 
   form.addEventListener('submit', async (e) => {
     e.preventDefault();

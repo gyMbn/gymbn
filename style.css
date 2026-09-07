@@ -1710,8 +1710,7 @@ a.list-item {
   .status-badge-ring,
   .day-complete-btn.just-completed,
   .confetti-dot.playing,
-  .bulk-exercise-row.row-appear,
-  .confirm-just-marked {
+  .bulk-exercise-row.row-appear {
     animation: none !important;
   }
   .status-badge-pop .status-badge-path {
@@ -1837,51 +1836,34 @@ a.list-item {
   margin-top: 4px;
 }
 
-.confirm-cycle-status {
-  font-size: 15px;
-  color: var(--text);
-  margin-bottom: var(--space-3);
+/* Ödemeler listesinin en üstünde, bekleyen (henüz alınmamış) döngüyü temsil
+   eden satır — normal .list-item, kesikli çerçeve + amber vurgu ile ayrılıyor.
+   Tıklanınca confirmSheet() ile "alındı mı?" sorusu açılıyor (bkz.
+   studentPayments.js) — ayrı, hep açık duran bir kart yerine listenin kendi
+   diline entegre, tek satırlık bir öğe. */
+.pending-payment-row {
+  border: 1px dashed var(--warning);
+  background: rgba(192, 134, 60, 0.07);
+  cursor: pointer;
 }
 
-.confirm-cycle-status.is-overdue {
-  color: var(--danger);
+.pending-payment-row.is-overdue {
+  border-color: var(--danger);
+  background: rgba(193, 102, 90, 0.07);
+}
+
+.pending-payment-row .list-item-sub {
+  color: var(--warning);
   font-weight: 600;
 }
 
-.confirm-cycle-actions {
-  display: flex;
-  gap: var(--space-2);
+.pending-payment-row.is-overdue .list-item-sub {
+  color: var(--danger);
 }
 
-.confirm-cycle-actions .btn {
-  flex: 1;
-}
-
-.confirm-just-marked {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  animation: confirm-pop 0.35s ease-out both;
-}
-
-.confirm-just-marked .check-badge {
-  width: 28px;
-  height: 28px;
-  border-radius: 50%;
-  background: var(--success);
-  color: #0d1a12;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: 700;
-  font-size: 15px;
-  flex-shrink: 0;
-}
-
-@keyframes confirm-pop {
-  0% { opacity: 0; transform: scale(0.7); }
-  60% { transform: scale(1.08); }
-  100% { opacity: 1; transform: scale(1); }
+.pending-payment-row .chevron {
+  font-size: 18px;
+  color: var(--text-muted);
 }
 
 
