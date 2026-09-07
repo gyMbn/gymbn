@@ -40,6 +40,11 @@ function showLoginScreen() {
         <input type="password" id="auth-password" placeholder="Şifre" autocomplete="current-password">
         <button type="button" class="btn btn-primary btn-block" id="auth-submit">Giriş Yap</button>
         <button type="button" class="btn btn-ghost btn-block" id="auth-reset">Şifremi unuttum</button>
+        <button type="button" class="role-entry-link" id="role-entry-link">Yönetici / Hoca girişi</button>
+        <div class="role-entry-choices" id="role-entry-choices" style="display:none;">
+          <button type="button" class="btn btn-ghost" id="role-entry-admin">Yönetici Girişi</button>
+          <button type="button" class="btn btn-ghost" id="role-entry-coach">Hoca Girişi</button>
+        </div>
         <p class="auth-error" id="auth-error" style="display:none;"></p>
         <p class="auth-hint" id="auth-hint" style="display:none;"></p>
       </div>
@@ -50,6 +55,8 @@ function showLoginScreen() {
   const passwordInput = document.getElementById('auth-password');
   const submitBtn = document.getElementById('auth-submit');
   const resetBtn = document.getElementById('auth-reset');
+  const roleEntryLink = document.getElementById('role-entry-link');
+  const roleEntryChoices = document.getElementById('role-entry-choices');
   const errorEl = document.getElementById('auth-error');
   const hintEl = document.getElementById('auth-hint');
 
@@ -111,6 +118,19 @@ function showLoginScreen() {
 
   submitBtn.addEventListener('click', trySignIn);
   resetBtn.addEventListener('click', tryResetPassword);
+  // Yönetici/Hoca hesapları bu ekrandan değil, kendi login sayfalarından (admin.html/
+  // coach.html) girer — bu link sadece oraya İÇERİDE (APK/PWA scope'undan çıkmadan)
+  // geçiş sağlıyor, normal sporcu girişini hiç etkilemiyor.
+  roleEntryLink.addEventListener('click', () => {
+    const isOpen = roleEntryChoices.style.display !== 'none';
+    roleEntryChoices.style.display = isOpen ? 'none' : 'flex';
+  });
+  document.getElementById('role-entry-admin').addEventListener('click', () => {
+    location.href = './admin.html';
+  });
+  document.getElementById('role-entry-coach').addEventListener('click', () => {
+    location.href = './coach.html';
+  });
   emailInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') passwordInput.focus(); });
   passwordInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') trySignIn(); });
   emailInput.focus();
