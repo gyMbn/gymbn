@@ -1,4 +1,4 @@
-import { escapeHtml, normalizeForMatch } from '../util.js';
+import { escapeHtml, normalizeForMatch, bindSheetBackClose } from '../util.js';
 
 export function openPicker({ title, items, onSelect, emptyMessage }) {
   const backdrop = document.createElement('div');
@@ -31,9 +31,7 @@ export function openPicker({ title, items, onSelect, emptyMessage }) {
     listEl.innerHTML = filtered.map((it) => `<div class="sheet-list-item" data-id="${it.id}">${escapeHtml(it.name)}</div>`).join('');
   }
 
-  function close() {
-    backdrop.remove();
-  }
+  const close = bindSheetBackClose(() => backdrop.remove());
 
   searchInput.addEventListener('input', () => renderList(searchInput.value));
 

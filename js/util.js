@@ -70,6 +70,11 @@ export function setAppChromeHidden(hidden) {
 // fonksiyonu çağrılmalı — hem gerçek kapatmayı yapar (verdiğin `doClose`
 // üzerinden) hem de sahte history kaydını tüketir, geri tuşuna basıldığında
 // tekrar ekstra bir "geri" adımı kalmasın diye.
+// `close(...args)` verdiğin argümanları `doClose`'a aynen iletir (ör. bir
+// confirm/reauth sheet'inin Promise sonucu) — geri tuşuyla kapanırsa `doClose`
+// HİÇ argümansız çağrılır, o yüzden confirm/reauth gibi Promise döndüren
+// sheet'ler `doClose(result = <güvenli varsayılan>)` şeklinde tanımlanmalı
+// (ör. bir onay sheet'inde geri tuşu ASLA "onaylandı" anlamına gelmemeli).
 export function bindSheetBackClose(doClose) {
   history.pushState({ gymbnSheet: true }, '');
   let closed = false;
@@ -80,11 +85,11 @@ export function bindSheetBackClose(doClose) {
     doClose();
   }
   window.addEventListener('popstate', onPopState);
-  return function close() {
+  return function close(...args) {
     if (closed) return;
     closed = true;
     window.removeEventListener('popstate', onPopState);
-    doClose();
+    doClose(...args);
     history.back();
   };
 }

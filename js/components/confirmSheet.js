@@ -1,4 +1,4 @@
-import { escapeHtml } from '../util.js';
+import { escapeHtml, bindSheetBackClose } from '../util.js';
 
 // Native confirm() yerine uygulamanın kendi sheet dili — "onayladığımız her
 // buton/alan her yerde aynı olsun" ilkesi: TEK tanım, her yıkıcı aksiyon
@@ -20,10 +20,14 @@ export function confirmSheet(message, { confirmLabel = 'Sil', cancelLabel = 'Vaz
     `;
     document.body.appendChild(backdrop);
 
-    function close(result) {
+    // Geri tuşuyla kapanırsa (argümansız çağrı) `result` varsayılan olarak
+    // false — bu genelde yıkıcı bir işlemi onaylıyor, geri tuşu ASLA "onaylandı"
+    // anlamına gelmemeli.
+    function doClose(result = false) {
       backdrop.remove();
       resolve(result);
     }
+    const close = bindSheetBackClose(doClose);
     backdrop.querySelector('.confirm-ok-btn').addEventListener('click', () => close(true));
     backdrop.querySelector('.confirm-cancel-btn').addEventListener('click', () => close(false));
     backdrop.addEventListener('click', (e) => { if (e.target === backdrop) close(false); });

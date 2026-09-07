@@ -3,14 +3,37 @@ import { escapeHtml } from '../util.js';
 const PRE_DELAY_SECONDS = 5;
 const INTENSE_THRESHOLD = 10;
 
-let activeBackdrop = null;
+// `bindSheetBackClose` (util.js) burada KASITLI olarak kullanılmıyor: o yardımcı
+// her açılışta yeni bir history kaydı push edip normal kapanışta `history.back()`
+// ile tüketiyor, ama `history.back()` ASENKRON (popstate hemen değil, bir sonraki
+// tick'te ateşleniyor). Bir countdown açıkken hemen bir yenisi açılırsa (bkz.
+// aşağıdaki activeState), eskisinin geciken `history.back()`'i araya girip YENİ
+// countdown'un henüz kayıtlı popstate dinleyicisini tetikleyip onu da anında
+// kapatabiliyordu — gerçek bir yarış durumu, test sırasında yakalandı. Çözüm:
+// hızlı değişimde history'e HİÇ dokunma (aynı pushlanmış tek kayıt kalsın), sadece
+// GERÇEK bir kapanışta (İptal/backdrop/geri tuşu, ardından yeni bir countdown
+// açılmıyorsa) `history.back()` çağır.
+let activeState = null; // { backdrop, intervalId, onPopState } | null
+
+function teardownActive({ consumeHistory }) {
+  if (!activeState) return;
+  const { backdrop, intervalId, onPopState } = activeState;
+  clearInterval(intervalId);
+  backdrop.remove();
+  window.removeEventListener('popstate', onPopState);
+  activeState = null;
+  if (consumeHistory) history.back();
+}
 
 // Plank/tutma gibi süre-bazlı egzersizler için: kısa bir hazırlık gecikmesinden
 // sonra hedef süreden geriye sayan bir modal. Son 10sn'de nabız yoğunlaşır (bkz.
 // dinlenme kronometresinin sürekli nabzından farklı, hedefe özel bir animasyon).
 // Ses/titreşim bilinçli olarak bu turda yok — kullanıcı "sonraya kalabilir" dedi.
 export function openCountdown({ targetSeconds, label }) {
-  if (activeBackdrop) activeBackdrop.remove();
+  // Zaten açık bir countdown varsa SADECE DOM/interval/listener'ını temizle —
+  // history'e dokunma, aşağıda o kaydı yeni countdown için yeniden kullanacağız.
+  const wasActive = !!activeState;
+  if (wasActive) teardownActive({ consumeHistory: false });
 
   const target = Math.max(1, Math.round(targetSeconds) || 0);
   const backdrop = document.createElement('div');
@@ -24,7 +47,6 @@ export function openCountdown({ targetSeconds, label }) {
     </div>
   `;
   document.body.appendChild(backdrop);
-  activeBackdrop = backdrop;
 
   const modal = backdrop.querySelector('.countdown-modal');
   const display = backdrop.querySelector('.countdown-display');
@@ -34,11 +56,12 @@ export function openCountdown({ targetSeconds, label }) {
   let remaining = PRE_DELAY_SECONDS;
   let intervalId = null;
 
-  function close() {
-    clearInterval(intervalId);
-    backdrop.remove();
-    if (activeBackdrop === backdrop) activeBackdrop = null;
-  }
+  function close() { teardownActive({ consumeHistory: true }); }
+  function onPopState() { teardownActive({ consumeHistory: false }); }
+
+  if (!wasActive) history.pushState({ gymbnSheet: true }, '');
+  window.addEventListener('popstate', onPopState);
+  activeState = { backdrop, intervalId: null, onPopState };
 
   function tick() {
     remaining--;
@@ -67,6 +90,7 @@ export function openCountdown({ targetSeconds, label }) {
   }
 
   intervalId = setInterval(tick, 1000);
+  activeState.intervalId = intervalId; // yukarıda placeholder null ile oluşturulmuştu
 
   backdrop.querySelector('.countdown-cancel').addEventListener('click', close);
   backdrop.addEventListener('click', (e) => {

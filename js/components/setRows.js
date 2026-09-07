@@ -1,5 +1,5 @@
 import { addActualSet, removeActualSet, updateActualSetField } from '../storage.js';
-import { escapeHtml, TRACKED_FIELD_TYPES, DEFAULT_TRACKED_FIELDS } from '../util.js';
+import { escapeHtml, TRACKED_FIELD_TYPES, DEFAULT_TRACKED_FIELDS, bindSheetBackClose } from '../util.js';
 import { openCountdown } from './countdownTimer.js';
 
 const WEIGHT_STEP = 2.5;
@@ -180,9 +180,7 @@ export function renderSetRows(container, { dayId, instId, inst, isDuration, exer
     `;
     document.body.appendChild(backdrop);
 
-    function close() {
-      backdrop.remove();
-    }
+    const close = bindSheetBackClose(() => backdrop.remove());
 
     function handlePick(e) {
       const cell = e.target.closest('.number-picker-cell, .zero-btn');

@@ -1,4 +1,4 @@
-import { escapeHtml } from '../util.js';
+import { escapeHtml, bindSheetBackClose } from '../util.js';
 
 const ICON_BELL = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 1 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>';
 
@@ -62,7 +62,8 @@ export function initNotificationBell(container, { listNotifications, markNotific
       </div>
     `;
     document.body.appendChild(backdrop);
-    backdrop.addEventListener('click', (e) => { if (e.target === backdrop) backdrop.remove(); });
+    const close = bindSheetBackClose(() => backdrop.remove());
+    backdrop.addEventListener('click', (e) => { if (e.target === backdrop) close(); });
 
     function renderList() {
       const listRoot = backdrop.querySelector('#notif-list');

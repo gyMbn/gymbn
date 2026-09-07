@@ -1,5 +1,5 @@
 import { getStudent, getStudentAppState, setStudentAppState } from './coachCloud.js';
-import { escapeHtml, formatDateShortTr, todayIso } from '../util.js';
+import { escapeHtml, formatDateShortTr, todayIso, bindSheetBackClose } from '../util.js';
 
 // Demo'da onaylanan "yansıyan diyagram" birebir: asıl giriş sağdaki liste,
 // silüet sadece dokunulan satırı aydınlatan dekoratif bir referans — kendisi
@@ -274,7 +274,7 @@ function openEntrySheet(meta, state, onSave) {
   `;
   document.body.appendChild(backdrop);
 
-  function close() { backdrop.remove(); }
+  const close = bindSheetBackClose(() => backdrop.remove());
   backdrop.addEventListener('click', (e) => { if (e.target === backdrop) close(); });
 
   const saveBtn = backdrop.querySelector('#entry-save');

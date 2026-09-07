@@ -1,4 +1,4 @@
-import { normalizeForMatch, addDaysIso, mondayOfWeek, todayIso, escapeHtml, formatDateShortTr, statusBadge, DEFAULT_TRACKED_FIELDS } from '../util.js';
+import { normalizeForMatch, addDaysIso, mondayOfWeek, todayIso, escapeHtml, formatDateShortTr, statusBadge, DEFAULT_TRACKED_FIELDS, bindSheetBackClose } from '../util.js';
 import { parseWeeklyProgramText } from '../bulkParse.js';
 import { getStudent, getStudentAppState, setStudentAppState, listCatalog, getMyCoachProfile, notifyStudent } from './coachCloud.js';
 import { confirmSheet } from '../components/confirmSheet.js';
@@ -165,7 +165,7 @@ function openSetPicker({ current, onSelect }) {
   `;
   document.body.appendChild(backdrop);
 
-  function close() { backdrop.remove(); }
+  const close = bindSheetBackClose(() => backdrop.remove());
   function handlePick(e) {
     const cell = e.target.closest('.number-picker-cell, .zero-btn');
     if (!cell) return;
@@ -260,10 +260,12 @@ function openRangePicker({ title, max, current, allowFailure, onSelect }) {
   zeroBtn.addEventListener('click', () => pick(0));
   if (checkbox) checkbox.addEventListener('change', () => { updateReadout(); updateFailureState(); });
 
-  function close() {
+  // Bu picker'da gerçek bir "vazgeç" kavramı yok — Kapat/backdrop/geri tuşu
+  // hepsi o an seçili olan değeri onSelect ile commit ediyor.
+  const close = bindSheetBackClose(() => {
     onSelect(checkbox && checkbox.checked ? UNTIL_FAILURE_TEXT : formatRangeValue(start, end));
     backdrop.remove();
-  }
+  });
   backdrop.querySelector('.sheet-close').addEventListener('click', close);
   backdrop.addEventListener('click', (e) => { if (e.target === backdrop) close(); });
 

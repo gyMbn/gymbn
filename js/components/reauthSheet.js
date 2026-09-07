@@ -3,7 +3,7 @@
 // için (hesap silme gibi) "requires-recent-login" fırlattığı, uzun süredir
 // oturumu açık kullanıcıları yeniden doğrulamak için kullanılıyor. confirmSheet
 // gibi bir Promise döner — iptal edilirse null, girilirse şifre string'i.
-import { escapeHtml } from '../util.js';
+import { escapeHtml, bindSheetBackClose } from '../util.js';
 
 export function reauthSheet(message) {
   return new Promise((resolve) => {
@@ -26,10 +26,13 @@ export function reauthSheet(message) {
     const input = backdrop.querySelector('.reauth-password-input');
     const errorEl = backdrop.querySelector('.reauth-error');
 
-    function close(result) {
+    // Geri tuşuyla kapanırsa (argümansız çağrı) `result` varsayılan olarak
+    // null — "vazgeçildi" anlamına gelir, asla bir şifre olarak yorumlanmaz.
+    function doClose(result = null) {
       backdrop.remove();
       resolve(result);
     }
+    const close = bindSheetBackClose(doClose);
     function submit() {
       const password = input.value;
       if (!password) {

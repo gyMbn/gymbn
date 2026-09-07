@@ -5,7 +5,7 @@ import {
 } from './admin/adminCloud.js';
 import { renderLoginForm } from './shared/loginForm.js';
 import { confirmSheet } from './components/confirmSheet.js';
-import { escapeHtml } from './util.js';
+import { escapeHtml, bindSheetBackClose } from './util.js';
 import * as coachRoster from './admin/coachRoster.js';
 import * as exerciseCatalog from './admin/exerciseCatalog.js';
 import * as targetRegions from './admin/targetRegions.js';
@@ -168,7 +168,8 @@ async function openBroadcastSheet() {
     </div>
   `;
   document.body.appendChild(backdrop);
-  backdrop.addEventListener('click', (e) => { if (e.target === backdrop) backdrop.remove(); });
+  const close = bindSheetBackClose(() => backdrop.remove());
+  backdrop.addEventListener('click', (e) => { if (e.target === backdrop) close(); });
 
   const textarea = backdrop.querySelector('#broadcast-textarea');
   const resultEl = backdrop.querySelector('#broadcast-result');
