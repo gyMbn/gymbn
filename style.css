@@ -84,6 +84,12 @@ body.auth-gate #view-root {
   margin-bottom: var(--space-4);
 }
 
+.auth-card .back-link {
+  display: block;
+  text-align: left;
+  margin-bottom: var(--space-2);
+}
+
 .auth-loading {
   color: var(--text-muted);
 }
@@ -1759,6 +1765,7 @@ a.list-item {
   padding-bottom: calc(var(--space-4) + var(--safe-bottom));
   display: flex;
   flex-direction: column;
+  overflow-y: auto;
 }
 
 .sheet-title {

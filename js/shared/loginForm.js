@@ -60,6 +60,7 @@ export function renderLoginForm(container, { title, subtitle, onSubmit, onResetP
   container.innerHTML = `
     <div class="auth-screen">
       <div class="auth-card">
+        <a href="./index.html" class="back-link" aria-label="Geri">←</a>
         <div class="auth-title">${title}</div>
         ${subtitle ? `<p class="auth-loading">${subtitle}</p>` : ''}
         ${chipsHtml}
