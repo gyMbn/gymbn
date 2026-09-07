@@ -1,4 +1,4 @@
-import { escapeHtml, ICON_TRASH, ICON_MEDIA, normalizeForMatch, TRACKED_FIELD_TYPES, DEFAULT_TRACKED_FIELDS } from '../util.js';
+import { escapeHtml, ICON_TRASH, ICON_MEDIA, normalizeForMatch, TRACKED_FIELD_TYPES, DEFAULT_TRACKED_FIELDS, bindSheetBackClose } from '../util.js';
 import { confirmSheet } from '../components/confirmSheet.js';
 
 // libraryList.js'in aynı görsel/etkileşim dili — sadece veri kaynağı yerel
@@ -278,7 +278,7 @@ export async function render(container, {
       durationToggle.setAttribute('aria-checked', isOn ? 'true' : 'false');
     });
 
-    function close() { backdrop.remove(); }
+    const close = bindSheetBackClose(() => backdrop.remove());
     backdrop.addEventListener('click', (e) => { if (e.target === backdrop) close(); });
 
     backdrop.querySelector('#media-save').addEventListener('click', async () => {

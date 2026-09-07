@@ -1,4 +1,4 @@
-import { escapeHtml, ICON_TRASH, ICON_MEDIA, EXERCISE_REGIONS, TRACKED_FIELD_TYPES, DEFAULT_TRACKED_FIELDS, normalizeForMatch } from '../util.js';
+import { escapeHtml, ICON_TRASH, ICON_MEDIA, EXERCISE_REGIONS, TRACKED_FIELD_TYPES, DEFAULT_TRACKED_FIELDS, normalizeForMatch, bindSheetBackClose } from '../util.js';
 import { confirmSheet } from './confirmSheet.js';
 import { getAnyAccessibleCatalog } from '../cloudSync.js';
 import { closestCatalogMatch } from '../shared/catalogMatch.js';
@@ -278,7 +278,7 @@ export function renderLibraryList(container, { title, store, placeholder, backHr
       durationToggle.setAttribute('aria-checked', isOn ? 'true' : 'false');
     });
 
-    function close() { backdrop.remove(); }
+    const close = bindSheetBackClose(() => backdrop.remove());
     backdrop.addEventListener('click', (e) => { if (e.target === backdrop) close(); });
 
     backdrop.querySelector('#media-save').addEventListener('click', () => {

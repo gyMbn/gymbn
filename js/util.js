@@ -63,6 +63,32 @@ export function setAppChromeHidden(hidden) {
   document.body.classList.toggle('chrome-hidden', hidden);
 }
 
+// Bir sheet/modal açıldığında çağır: Android/tarayıcının donanım "geri" tuşu,
+// arkadaki sayfada gezinmek yerine bu sheet'i kapatsın diye sahte bir history
+// kaydı iter. Sheet'i backdrop tıklaması/Kaydet/X gibi normal yollardan
+// kapatırken `backdrop.remove()` DEĞİL, bu fonksiyonun döndürdüğü `close`
+// fonksiyonu çağrılmalı — hem gerçek kapatmayı yapar (verdiğin `doClose`
+// üzerinden) hem de sahte history kaydını tüketir, geri tuşuna basıldığında
+// tekrar ekstra bir "geri" adımı kalmasın diye.
+export function bindSheetBackClose(doClose) {
+  history.pushState({ gymbnSheet: true }, '');
+  let closed = false;
+  function onPopState() {
+    if (closed) return;
+    closed = true;
+    window.removeEventListener('popstate', onPopState);
+    doClose();
+  }
+  window.addEventListener('popstate', onPopState);
+  return function close() {
+    if (closed) return;
+    closed = true;
+    window.removeEventListener('popstate', onPopState);
+    doClose();
+    history.back();
+  };
+}
+
 // Egzersiz durumunu (good/bad/neutral/null) her yerde aynı görünen tek bir rozete
 // çeviriyor: yeşil ✓ (good), kırmızı ▼ (bad), turuncu − (kullanıcının GERÇEKTEN
 // seçtiği "fena değildi"). Hiç işaretlenmemiş (status null/undefined) durumda
