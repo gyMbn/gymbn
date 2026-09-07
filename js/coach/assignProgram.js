@@ -1,4 +1,4 @@
-import { normalizeForMatch, addDaysIso, mondayOfWeek, todayIso, escapeHtml, formatDateShortTr, statusBadge, DEFAULT_TRACKED_FIELDS, bindSheetBackClose } from '../util.js';
+import { normalizeForMatch, addDaysIso, mondayOfWeek, todayIso, escapeHtml, formatDateShortTr, statusBadge, DEFAULT_TRACKED_FIELDS, TRACKED_FIELD_TYPES, bindSheetBackClose } from '../util.js';
 import { parseWeeklyProgramText } from '../bulkParse.js';
 import { getStudent, getStudentAppState, setStudentAppState, listCatalog, getMyCoachProfile, notifyStudent } from './coachCloud.js';
 import { confirmSheet } from '../components/confirmSheet.js';
@@ -271,13 +271,31 @@ function openRangePicker({ title, max, current, allowFailure, onSelect }) {
 
   render();
 }
-function buildActualSetsFromPrescribed(prescribed, isDuration) {
-  const count = Math.max(1, Number(prescribed.setCount) || 1);
-  const reps = String(extractLeadingInt(prescribed.reps, 0));
-  const rirValue = extractLeadingInt(prescribed.rir, 0);
-  const rir = String(isDuration ? Math.max(0, rirValue) : clampRir(rirValue));
+// storage.js'in (module-private) buildOneActualSet/buildActualSetsFromPrescribed'ıyla
+// AYNI mantığın kasıtlı küçük kopyası — bkz. dosya başındaki not. trackedFields'ta
+// olmayan bir alan satıra hiç girmiyor (ör. Yürüyüş'te weight/rir yok) — eskiden
+// bu fonksiyon hep weight/reps/rir'e sabitti, kataloğun gerçek takip alanlarına
+// hiç bakmıyordu (bkz. bu düzeltmenin geldiği sohbet — "Süre" alanı olan bir
+// egzersiz toplu atamada hiçbir zaman Süre değeri alamıyordu).
+function buildOneActualSet(prescribed, trackedFields, isDuration) {
+  const row = { touched: false };
+  trackedFields.forEach((key) => {
+    if (key === 'setCount') return;
+    if (key === 'reps') {
+      row.reps = String(extractLeadingInt(prescribed.reps, 0));
+    } else if (key === 'rir') {
+      const rirValue = extractLeadingInt(prescribed.rir, 0);
+      row.rir = String(isDuration ? Math.max(0, rirValue) : clampRir(rirValue));
+    } else {
+      row[key] = prescribed[key] ?? '';
+    }
+  });
+  return row;
+}
+function buildActualSetsFromPrescribed(prescribed, trackedFields, isDuration) {
+  const count = trackedFields.includes('setCount') ? Math.max(1, Number(prescribed.setCount) || 1) : 1;
   const rows = [];
-  for (let i = 0; i < count; i++) rows.push({ weight: prescribed.weight, reps, rir, touched: false });
+  for (let i = 0; i < count; i++) rows.push(buildOneActualSet(prescribed, trackedFields, isDuration));
   return rows;
 }
 function addExerciseInstanceWithPrescribed(state, dayId, exerciseId, prescribed) {
@@ -285,13 +303,14 @@ function addExerciseInstanceWithPrescribed(state, dayId, exerciseId, prescribed)
   if (!entry) return null;
   const exercise = state.exercises.find((e) => e.id === exerciseId);
   const isDuration = !!(exercise && exercise.isDuration);
+  const trackedFields = (exercise && exercise.trackedFields) || DEFAULT_TRACKED_FIELDS;
   const inst = {
     id: uid('exi'),
     exerciseId,
     note: '',
     status: null,
     prescribed,
-    actualSets: buildActualSetsFromPrescribed(prescribed, isDuration),
+    actualSets: buildActualSetsFromPrescribed(prescribed, trackedFields, isDuration),
   };
   entry.exercises.push(inst);
   return inst;
@@ -480,17 +499,20 @@ function buildBlocksFromExistingWeek(state, catalog, weekMonday) {
           const normalizedName = normalizeForMatch(parsedName);
           catalogMatch = catalog.find((c) => normalizeForMatch(c.name) === normalizedName) || null;
         }
-        return {
+        // Hangi alanlar kopyalanacak: eşleşen kataloğun (bulunduysa), yoksa
+        // yerel egzersizin kendi trackedFields'ı — eskiden sabit weight/
+        // setCount/reps/rir'e sıkışmıştı, "Süre" gibi başka alanlar kopyalarken
+        // sessizce kayboluyordu (bkz. bu düzeltmenin geldiği sohbet).
+        const trackedFields = (catalogMatch && catalogMatch.trackedFields) || (exercise && exercise.trackedFields) || DEFAULT_TRACKED_FIELDS;
+        const ex = {
           name: catalogMatch ? catalogMatch.name : parsedName,
           parsedName,
           catalogId: catalogMatch ? catalogMatch.id : null,
-          weight: inst.prescribed.weight || '',
-          setCount: inst.prescribed.setCount ?? '',
-          reps: inst.prescribed.reps ?? '',
-          rir: inst.prescribed.rir ?? '',
           coachNote: inst.prescribed.coachNote || '',
           lastTime: buildLastTimeInfo(inst, exercise),
         };
+        trackedFields.forEach((key) => { ex[key] = inst.prescribed[key] ?? ''; });
+        return ex;
       }),
     };
   });
@@ -740,6 +762,35 @@ function buildBlockCard(block, state, catalog, startOpen) {
   return card;
 }
 
+// Seçili (ya da henüz seçilmemiş) egzersizin hangi alanları takip ettiği —
+// kataloğun kendi ayarına göre. Eşleşmemiş satırlar için varsayılan 4 alan
+// (Ağırlık/Set/Tekrar/Rir) gösterilir, gerçek liste seçim yapılınca gelir.
+function fieldsForExercise(ex, catalog) {
+  const catalogEx = catalog.find((c) => c.id === ex.catalogId);
+  return (catalogEx && catalogEx.trackedFields) || DEFAULT_TRACKED_FIELDS;
+}
+
+// Bilinen 4 alan (weight/setCount/reps/rir) kendi özel kontrolünü korur (metin
+// kutusu ya da sayı seçici) — geri kalan her şey (süre/eğim/hız/mesafe/direnç)
+// weight ile aynı basit metin kutusu, etiketi TRACKED_FIELD_TYPES'tan.
+function buildFieldHtml(ex, key) {
+  if (key === 'weight') {
+    return `<div class="field"><label>Ağırlık</label><input type="text" class="bulk-ex-field" data-field="weight" value="${escapeHtml(ex.weight || '')}"></div>`;
+  }
+  if (key === 'setCount') {
+    return `<div class="field"><label>Set</label><button type="button" class="bulk-picker-trigger${ex.setCount === '' || ex.setCount == null ? ' empty' : ''}" data-field="setCount">${escapeHtml(fieldDisplay(ex.setCount))}</button></div>`;
+  }
+  if (key === 'reps') {
+    return `<div class="field"><label>Tekrar</label><button type="button" class="bulk-picker-trigger${ex.reps === '' || ex.reps == null ? ' empty' : ''}" data-field="reps">${escapeHtml(fieldDisplay(ex.reps))}</button></div>`;
+  }
+  if (key === 'rir') {
+    return `<div class="field"><label>Rir</label><button type="button" class="bulk-picker-trigger${ex.rir === '' || ex.rir == null ? ' empty' : ''}" data-field="rir">${escapeHtml(fieldDisplay(ex.rir))}</button></div>`;
+  }
+  const meta = TRACKED_FIELD_TYPES.find((f) => f.key === key);
+  const label = meta ? `${meta.label}${meta.unit ? ` (${meta.unit})` : ''}` : key;
+  return `<div class="field"><label>${escapeHtml(label)}</label><input type="text" class="bulk-ex-field" data-field="${escapeHtml(key)}" value="${escapeHtml(ex[key] || '')}"></div>`;
+}
+
 function buildExerciseRow(ex, block, exList, catalog, onCountChange) {
   const row = document.createElement('div');
   row.className = 'bulk-exercise-row';
@@ -763,22 +814,7 @@ function buildExerciseRow(ex, block, exList, catalog, onCountChange) {
       <button type="button" class="btn-icon danger bulk-ex-remove" aria-label="Satırı sil">×</button>
     </div>
     <div class="bulk-exercise-row-fields">
-      <div class="field">
-        <label>Ağırlık</label>
-        <input type="text" class="bulk-ex-field" data-field="weight" value="${escapeHtml(ex.weight)}">
-      </div>
-      <div class="field">
-        <label>Set</label>
-        <button type="button" class="bulk-picker-trigger${ex.setCount === '' ? ' empty' : ''}" data-field="setCount">${escapeHtml(fieldDisplay(ex.setCount))}</button>
-      </div>
-      <div class="field">
-        <label>Tekrar</label>
-        <button type="button" class="bulk-picker-trigger${ex.reps === '' ? ' empty' : ''}" data-field="reps">${escapeHtml(fieldDisplay(ex.reps))}</button>
-      </div>
-      <div class="field">
-        <label>Rir</label>
-        <button type="button" class="bulk-picker-trigger${ex.rir === '' ? ' empty' : ''}" data-field="rir">${escapeHtml(fieldDisplay(ex.rir))}</button>
-      </div>
+      ${fieldsForExercise(ex, catalog).map((key) => buildFieldHtml(ex, key)).join('')}
     </div>
     ${ex.lastTime ? `
       <div class="bulk-ex-last-time">${statusBadge(ex.lastTime.status)}Geçen sefer: ${escapeHtml(ex.lastTime.summary)}${ex.lastTime.note ? ` — <span class="bulk-ex-last-time-note">"${escapeHtml(ex.lastTime.note)}"</span>` : ''}</div>
@@ -787,6 +823,64 @@ function buildExerciseRow(ex, block, exList, catalog, onCountChange) {
   `;
 
   const nameSelect = row.querySelector('.bulk-ex-name-select');
+  const fieldsWrap = row.querySelector('.bulk-exercise-row-fields');
+
+  // Alanlar her yeniden çizildiğinde (ilk kurulumda VE resolveSelection sonrası,
+  // bkz. aşağısı) yeniden çağrılıyor — eski düğümler innerHTML ile atılıp yenileri
+  // takılıyor, o yüzden eski dinleyicilerin ayrıca sökülmesi gerekmiyor.
+  function wireFields() {
+    fieldsWrap.querySelectorAll('.bulk-ex-field').forEach((input) => {
+      input.addEventListener('input', (e) => {
+        ex[e.target.dataset.field] = e.target.value;
+      });
+    });
+    const setBtn = fieldsWrap.querySelector('[data-field="setCount"]');
+    if (setBtn) {
+      setBtn.addEventListener('click', () => {
+        openSetPicker({
+          current: (ex.setCount === '' || ex.setCount == null) ? null : ex.setCount,
+          onSelect: (value) => {
+            ex.setCount = value;
+            setBtn.textContent = fieldDisplay(value);
+            setBtn.classList.remove('empty');
+          },
+        });
+      });
+    }
+    const repsBtn = fieldsWrap.querySelector('[data-field="reps"]');
+    if (repsBtn) {
+      repsBtn.addEventListener('click', () => {
+        openRangePicker({
+          title: 'Tekrar',
+          max: REPS_MAX,
+          current: ex.reps,
+          allowFailure: true,
+          onSelect: (value) => {
+            ex.reps = value;
+            repsBtn.textContent = fieldDisplay(value);
+            repsBtn.classList.toggle('empty', value === '');
+          },
+        });
+      });
+    }
+    const rirBtn = fieldsWrap.querySelector('[data-field="rir"]');
+    if (rirBtn) {
+      rirBtn.addEventListener('click', () => {
+        openRangePicker({
+          title: 'Rir',
+          max: RIR_MAX,
+          current: ex.rir,
+          onSelect: (value) => {
+            ex.rir = value;
+            rirBtn.textContent = fieldDisplay(value);
+            rirBtn.classList.toggle('empty', value === '');
+          },
+        });
+      });
+    }
+  }
+  wireFields();
+
   function resolveSelection(catalogId) {
     const catalogEx = catalog.find((c) => c.id === catalogId);
     ex.catalogId = catalogEx ? catalogEx.id : null;
@@ -795,57 +889,16 @@ function buildExerciseRow(ex, block, exList, catalog, onCountChange) {
     nameSelect.classList.toggle('unresolved', !ex.catalogId);
     const suggestBtn = row.querySelector('.bulk-ex-suggest-btn');
     if (suggestBtn) suggestBtn.style.display = ex.catalogId ? 'none' : '';
+    // Hangi hareket seçildiğine göre takip alanları değişebilir (ör. Ağırlık
+    // kaldırmadan Yürüyüş'e geçmek) — alan listesi ve dinleyicileri baştan.
+    fieldsWrap.innerHTML = fieldsForExercise(ex, catalog).map((key) => buildFieldHtml(ex, key)).join('');
+    wireFields();
   }
   nameSelect.addEventListener('change', (e) => resolveSelection(e.target.value));
   const suggestBtn = row.querySelector('.bulk-ex-suggest-btn');
   if (suggestBtn) {
     suggestBtn.addEventListener('click', () => resolveSelection(suggestBtn.dataset.suggestId));
   }
-
-  row.querySelector('.bulk-ex-field[data-field="weight"]').addEventListener('input', (e) => {
-    ex.weight = e.target.value;
-  });
-
-  const setBtn = row.querySelector('[data-field="setCount"]');
-  setBtn.addEventListener('click', () => {
-    openSetPicker({
-      current: ex.setCount === '' ? null : ex.setCount,
-      onSelect: (value) => {
-        ex.setCount = value;
-        setBtn.textContent = fieldDisplay(value);
-        setBtn.classList.remove('empty');
-      },
-    });
-  });
-
-  const repsBtn = row.querySelector('[data-field="reps"]');
-  repsBtn.addEventListener('click', () => {
-    openRangePicker({
-      title: 'Tekrar',
-      max: REPS_MAX,
-      current: ex.reps,
-      allowFailure: true,
-      onSelect: (value) => {
-        ex.reps = value;
-        repsBtn.textContent = fieldDisplay(value);
-        repsBtn.classList.toggle('empty', value === '');
-      },
-    });
-  });
-
-  const rirBtn = row.querySelector('[data-field="rir"]');
-  rirBtn.addEventListener('click', () => {
-    openRangePicker({
-      title: 'Rir',
-      max: RIR_MAX,
-      current: ex.rir,
-      onSelect: (value) => {
-        ex.rir = value;
-        rirBtn.textContent = fieldDisplay(value);
-        rirBtn.classList.toggle('empty', value === '');
-      },
-    });
-  });
 
   row.querySelector('.bulk-ex-note').addEventListener('input', (e) => {
     ex.coachNote = e.target.value;
@@ -923,10 +976,12 @@ function commitBlocks(state, blocks, catalog, assignmentSeq) {
       const catalogEx = catalog.find((c) => c.id === ex.catalogId);
       if (!catalogEx) continue;
       const exercise = resolveLocalExercise(state, catalogEx);
-      addExerciseInstanceWithPrescribed(
-        state, entry.id, exercise.id,
-        { weight: ex.weight, setCount: ex.setCount, reps: ex.reps, rir: ex.rir, coachNote: ex.coachNote },
-      );
+      // Hangi alanlar geçerliyse (weight/setCount/reps/rir ya da süre/eğim/hız/
+      // mesafe/direnç) sadece ONLAR kopyalanıyor — sabit 4 alan değil.
+      const trackedFields = exercise.trackedFields || DEFAULT_TRACKED_FIELDS;
+      const prescribed = { coachNote: ex.coachNote };
+      trackedFields.forEach((key) => { prescribed[key] = ex[key] ?? ''; });
+      addExerciseInstanceWithPrescribed(state, entry.id, exercise.id, prescribed);
     }
   }
 }
