@@ -408,6 +408,8 @@ Posterior - 1
 Barfiks 3 set 5-6 tekrar
 ..."></textarea>
     <button type="button" class="btn btn-primary btn-block" id="parse-btn">Ayrıştır</button>
+    <p class="muted" style="text-align:center; margin:var(--space-2) 0 var(--space-4);">veya</p>
+    <button type="button" class="btn btn-block" id="manual-create-btn" style="border-color:var(--primary); color:var(--primary);">✎ Manuel Oluştur</button>
   `;
 
   if (conflict.occupied) {
@@ -451,6 +453,13 @@ Barfiks 3 set 5-6 tekrar
       state, assignMonday,
     );
     renderReviewScreen(container, student, state, monday, assignMonday, blocks, catalog);
+  });
+
+  // Yapıştır/kopyala akışlarına DOKUNMADAN, sıfırdan başlamak isteyenler için —
+  // aynı önizleme ekranı, sadece boş bir blok listesiyle. "+ Yeni Gün Ekle"
+  // (renderReviewScreen'de) günleri tek tek ekliyor.
+  container.querySelector('#manual-create-btn').addEventListener('click', () => {
+    renderReviewScreen(container, student, state, monday, assignMonday, [], catalog);
   });
 }
 
@@ -604,6 +613,8 @@ function renderReviewScreen(container, student, state, monday, assignMonday, blo
       <button type="button" id="expand-all-btn">Tümünü Aç</button><span class="toggle-all-dot">·</span><button type="button" id="collapse-all-btn">Tümünü Kapat</button>
     </div>` : ''}
     <div id="blocks-root"></div>
+    <button type="button" class="btn btn-block" id="add-block-btn">+ Yeni Gün Ekle</button>
+    <div style="height:var(--space-4);"></div>
     <button type="button" class="btn btn-primary btn-block" id="confirm-btn">Onayla ve Ata</button>
   `;
 
@@ -617,6 +628,18 @@ function renderReviewScreen(container, student, state, monday, assignMonday, blo
   // olmadan görüp öyle isteğine göre tek tek açmak istiyor. Her kart bağımsız
   // açılıp kapanıyor.
   blocks.forEach((block) => blocksRoot.appendChild(buildBlockCard(block, state, catalog, false)));
+
+  // "Manuel Oluştur"dan gelen boş listeye (ya da yapıştır/kopyala sonrası fazladan
+  // bir güne) tek tek gün eklemek için — kart AÇIK geliyor (diğerlerinin aksine),
+  // yeni eklenen günün hemen adlandırılması bekleniyor.
+  container.querySelector('#add-block-btn').addEventListener('click', () => {
+    const newBlock = { dayTypeRaw: '', dayTypeId: null, assignedDate: null, exercises: [] };
+    blocks.push(newBlock);
+    const card = buildBlockCard(newBlock, state, catalog, true);
+    blocksRoot.appendChild(card);
+    card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    card.querySelector('.block-daytype-new-input')?.focus();
+  });
 
   // Birden fazla gün olunca hepsini tek tek açıp kapatmak yorucu oluyor —
   // kullanıcının kendi isteği (bkz. bu değişikliğin geldiği sohbet).
@@ -668,7 +691,7 @@ function buildBlockCard(block, state, catalog, startOpen) {
   )).join('');
   const newDayTypeOption = block.dayTypeId
     ? ''
-    : `<option value="" selected>Yeni: ${escapeHtml(block.dayTypeRaw || 'İsimsiz')}</option>`;
+    : `<option value="" selected>+ Yeni gün tipi...</option>`;
 
   card.innerHTML = `
     <div class="block-acc-header${startOpen ? '' : ' collapsed'}">
@@ -685,6 +708,7 @@ function buildBlockCard(block, state, catalog, startOpen) {
           <div class="field">
             <label>Gün Tipi</label>
             <select class="block-daytype-select">${newDayTypeOption}${dayTypeOptions}</select>
+            <input type="text" class="block-daytype-new-input" placeholder="Gün tipi adı yaz (ör. Anterior-2)" value="${escapeHtml(block.dayTypeRaw || '')}" style="${block.dayTypeId ? 'display:none;' : ''} margin-top:var(--space-2);">
           </div>
           <div class="field">
             <label>Tarih</label>
@@ -721,8 +745,15 @@ function buildBlockCard(block, state, catalog, startOpen) {
     body.classList.toggle('collapsed');
   });
 
+  const newNameInput = card.querySelector('.block-daytype-new-input');
   card.querySelector('.block-daytype-select').addEventListener('change', (e) => {
     block.dayTypeId = e.target.value || null;
+    newNameInput.style.display = block.dayTypeId ? 'none' : '';
+    if (!block.dayTypeId) newNameInput.focus();
+    updateHeaderText();
+  });
+  newNameInput.addEventListener('input', (e) => {
+    block.dayTypeRaw = e.target.value;
     updateHeaderText();
   });
 

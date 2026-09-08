@@ -123,6 +123,8 @@ Posterior - 1
 Barfiks 3 set 5-6 tekrar
 ..."></textarea>
       <button type="button" class="btn btn-primary btn-block" id="parse-btn">Ayrıştır</button>
+      <p class="muted" style="text-align:center; margin:var(--space-2) 0 var(--space-4);">veya</p>
+      <button type="button" class="btn btn-block" id="manual-create-btn" style="border-color:var(--primary); color:var(--primary);">✎ Manuel Oluştur</button>
     `}
   `;
 
@@ -157,6 +159,13 @@ Barfiks 3 set 5-6 tekrar
       monday,
     );
     renderReviewScreen(container, monday, blocks, catalog, linkCatalog);
+  });
+
+  // assignProgram.js'teki AYNI kısayol — yapıştır/kopyala akışlarına dokunmadan,
+  // sıfırdan başlamak isteyenler için. "+ Yeni Gün Ekle" (renderReviewScreen'de)
+  // günleri tek tek ekliyor.
+  container.querySelector('#manual-create-btn').addEventListener('click', () => {
+    renderReviewScreen(container, monday, [], catalog, linkCatalog);
   });
 }
 
@@ -303,6 +312,8 @@ function renderReviewScreen(container, monday, blocks, catalog, linkCatalog) {
       <button type="button" id="expand-all-btn">Tümünü Aç</button><span class="toggle-all-dot">·</span><button type="button" id="collapse-all-btn">Tümünü Kapat</button>
     </div>` : ''}
     <div id="blocks-root"></div>
+    <button type="button" class="btn btn-block" id="add-block-btn">+ Yeni Gün Ekle</button>
+    <div style="height:var(--space-4);"></div>
     <button type="button" class="btn btn-primary btn-block" id="confirm-btn">Onayla ve Ekle</button>
   `;
 
@@ -314,6 +325,16 @@ function renderReviewScreen(container, monday, blocks, catalog, linkCatalog) {
   // assignProgram.js'teki AYNI varsayılan — hepsi kapalı, bkz. oradaki yorum.
   blocks.forEach((block) => {
     blocksRoot.appendChild(buildBlockCard(block, catalog, false, linkCatalog));
+  });
+
+  // assignProgram.js'teki AYNI "+ Yeni Gün Ekle" — bkz. oradaki yorum.
+  container.querySelector('#add-block-btn').addEventListener('click', () => {
+    const newBlock = { dayTypeRaw: '', dayTypeId: null, assignedDate: null, exercises: [] };
+    blocks.push(newBlock);
+    const card = buildBlockCard(newBlock, catalog, true, linkCatalog);
+    blocksRoot.appendChild(card);
+    card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    card.querySelector('.block-daytype-new-input')?.focus();
   });
 
   // assignProgram.js'teki AYNI tümünü aç/kapat — bkz. oradaki yorum.
@@ -353,7 +374,7 @@ function buildBlockCard(block, catalog, startOpen, linkCatalog) {
   )).join('');
   const newDayTypeOption = block.dayTypeId
     ? ''
-    : `<option value="" selected>Yeni: ${escapeHtml(block.dayTypeRaw || 'İsimsiz')}</option>`;
+    : `<option value="" selected>+ Yeni gün tipi...</option>`;
 
   card.innerHTML = `
     <div class="block-acc-header${startOpen ? '' : ' collapsed'}">
@@ -370,6 +391,7 @@ function buildBlockCard(block, catalog, startOpen, linkCatalog) {
           <div class="field">
             <label>Gün Tipi</label>
             <select class="block-daytype-select">${newDayTypeOption}${dayTypeOptions}</select>
+            <input type="text" class="block-daytype-new-input" placeholder="Gün tipi adı yaz (ör. Anterior-2)" value="${escapeHtml(block.dayTypeRaw || '')}" style="${block.dayTypeId ? 'display:none;' : ''} margin-top:var(--space-2);">
           </div>
           <div class="field">
             <label>Tarih</label>
@@ -378,6 +400,7 @@ function buildBlockCard(block, catalog, startOpen, linkCatalog) {
         </div>
         <div class="block-date-info muted"></div>
         <div class="block-exercise-list"></div>
+        <button type="button" class="btn btn-block block-add-exercise-btn">+ Egzersiz Ekle</button>
       </div>
     </div>
   `;
@@ -386,6 +409,10 @@ function buildBlockCard(block, catalog, startOpen, linkCatalog) {
   const body = card.querySelector('.block-acc-body');
   const headerTitle = card.querySelector('.block-acc-header-title');
   const headerSub = card.querySelector('.block-acc-header-sub');
+  const badge = card.querySelector('.block-acc-badge');
+  function updateBadge() {
+    badge.textContent = `${block.exercises.length} egzersiz`;
+  }
 
   // assignProgram.js'teki AYNI mantık — bkz. oradaki yorum.
   function updateHeaderText() {
@@ -400,8 +427,15 @@ function buildBlockCard(block, catalog, startOpen, linkCatalog) {
     body.classList.toggle('collapsed');
   });
 
+  const newNameInput = card.querySelector('.block-daytype-new-input');
   card.querySelector('.block-daytype-select').addEventListener('change', (e) => {
     block.dayTypeId = e.target.value || null;
+    newNameInput.style.display = block.dayTypeId ? 'none' : '';
+    if (!block.dayTypeId) newNameInput.focus();
+    updateHeaderText();
+  });
+  newNameInput.addEventListener('input', (e) => {
+    block.dayTypeRaw = e.target.value;
     updateHeaderText();
   });
 
@@ -419,7 +453,20 @@ function buildBlockCard(block, catalog, startOpen, linkCatalog) {
 
   const exList = card.querySelector('.block-exercise-list');
   block.exercises.forEach((ex) => {
-    exList.appendChild(buildExerciseRow(ex, block, exList, catalog, linkCatalog));
+    exList.appendChild(buildExerciseRow(ex, block, exList, catalog, linkCatalog, updateBadge));
+  });
+
+  // assignProgram.js'teki AYNI "+ Egzersiz Ekle" — bkz. oradaki yorum. Katalog
+  // modunda dropdown'a, serbest-metin modunda isim kutusuna odaklanıyor.
+  card.querySelector('.block-add-exercise-btn').addEventListener('click', () => {
+    const ex = { name: '', parsedName: '', catalogId: null, weight: '', setCount: '', reps: '', rir: '', coachNote: '', lastTime: null };
+    block.exercises.push(ex);
+    const row = buildExerciseRow(ex, block, exList, catalog, linkCatalog, updateBadge);
+    row.classList.add('row-appear');
+    exList.appendChild(row);
+    updateBadge();
+    const focusEl = row.querySelector('.bulk-ex-name-select') || row.querySelector('.bulk-ex-name');
+    focusEl?.focus();
   });
 
   return card;
@@ -603,7 +650,7 @@ function buildFieldHtml(ex, key) {
   return `<div class="field"><label>${escapeHtml(label)}</label><input type="text" class="bulk-ex-field" data-field="${escapeHtml(key)}" value="${escapeHtml(ex[key] || '')}"></div>`;
 }
 
-function buildExerciseRow(ex, block, exList, catalog, linkCatalog) {
+function buildExerciseRow(ex, block, exList, catalog, linkCatalog, onCountChange) {
   const row = document.createElement('div');
   row.className = 'bulk-exercise-row';
 
@@ -794,6 +841,7 @@ function buildExerciseRow(ex, block, exList, catalog, linkCatalog) {
     const idx = Array.from(exList.children).indexOf(row);
     if (idx !== -1) block.exercises.splice(idx, 1);
     row.remove();
+    if (onCountChange) onCountChange();
   });
 
   return row;
