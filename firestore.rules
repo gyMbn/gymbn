@@ -36,6 +36,12 @@ service cloud.firestore {
       return isCoach()
         && get(/databases/$(database)/documents/coaches/$(request.auth.uid)).data.get('canManageCatalog', false) == true;
     }
+    // canManageCatalog()'un aynı deseni, ayrı bir bayrak — hedef bölge listesini
+    // yönetme izni kataloğu yönetme izninden BAĞIMSIZ, admin ikisini ayrı ayrı verip alabiliyor.
+    function canManageRegions() {
+      return isCoach()
+        && get(/databases/$(database)/documents/coaches/$(request.auth.uid)).data.get('canManageRegions', false) == true;
+    }
 
     // ---- Mevcut kullanıcı verisi: DEĞİŞMEDİ, sadece bir OR ile genişledi ----
     // request.auth.uid == userId satırı hiç dokunulmadan aynı kaldı; isCoachOfStudent
@@ -70,9 +76,9 @@ service cloud.firestore {
         && request.resource.data.inviteToken is string
         && getAfter(/databases/$(database)/documents/coachInvites/$(request.resource.data.inviteToken)).data.status == 'claimed'
         && getAfter(/databases/$(database)/documents/coachInvites/$(request.resource.data.inviteToken)).data.claimedUid == request.auth.uid;
-      // Admin'in "Egzersiz Kütüphanesi" toggle'ı için tek, dar bir istisna — SADECE
-      // canManageCatalog alanını değiştirebiliyor, başka hiçbir alanı değiştiremez.
-      allow update: if isAdmin() && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['canManageCatalog']);
+      // Admin'in "Egzersiz Kütüphanesi"/"Hedef Bölgeler" toggle'ları için dar bir
+      // istisna — SADECE bu iki izin alanını değiştirebiliyor, başka hiçbir alanı değiştiremez.
+      allow update: if isAdmin() && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['canManageCatalog', 'canManageRegions']);
       // "Hesabımı sil" özelliği için: SADECE kendi kaydını silebilir. Bağlı
       // öğrencileri varsa bu silinmez/etkilenmez — uygulama tarafı buna göre
       // uyarı gösteriyor ama rules seviyesinde engellemiyoruz (bir koleksiyonda
@@ -142,14 +148,14 @@ service cloud.firestore {
       allow create, update, delete: if isAdmin() || canManageCatalog();
     }
 
-    // ---- targetRegions: hedef bölge listesi, admin'in yönettiği ayrı bir koleksiyon.
-    // Bölge LİSTESİNİ (ekleme/yeniden adlandırma/arşivleme) hâlâ sadece admin
-    // yönetiyor — ama canManageCatalog izni verilen bir hoca, egzersiz kataloğundaki
-    // video/hedef-bölge sheet'inin çip listesini doldurmak için bu listeyi OKUYABİLMELİ,
-    // yoksa o ekran o hoca için boş/kırık görünür. ----
+    // ---- targetRegions: hedef bölge listesi. Okuma (canManageCatalog izni verilen
+    // bir hoca, egzersiz kataloğundaki video/hedef-bölge sheet'inin çip listesini
+    // doldurmak için) katalog izninden bağımsız kalıyor — o ekran hep okuyabilmeli.
+    // YAZMA (ekleme/yeniden adlandırma/arşivleme) admin'de + admin'in AYRI
+    // canManageRegions toggle'ıyla güvendiği hocalarda (bkz. canManageRegions()). ----
     match /targetRegions/{regionId} {
-      allow get, list: if isAdmin() || canManageCatalog();
-      allow create, update, delete: if isAdmin();
+      allow get, list: if isAdmin() || canManageCatalog() || canManageRegions();
+      allow create, update, delete: if isAdmin() || canManageRegions();
     }
 
     // ---- notifications: uygulama içi bildirim. Alıcı SADECE kendi bildirimlerini

@@ -1,7 +1,7 @@
 import { renderRosterScreen } from '../roster/rosterUi.js';
 import {
   listMyStudents, listPendingStudentInvites, createStudentInvite, cancelStudentInvite, coachSignOut,
-  getStudentAppState, listMyNotifications, markNotificationRead, canManageCatalog,
+  getStudentAppState, listMyNotifications, markNotificationRead, canManageCatalog, canManageRegions,
 } from './coachCloud.js';
 import { cycleStatus } from './paymentCycle.js';
 import { formatDateShortTr } from '../util.js';
@@ -45,6 +45,7 @@ export async function render(container) {
       <div class="view-header-actions" id="header-actions"></div>
     </div>
     <a class="more-menu-item" id="catalog-link" href="#/catalog" style="display:none; margin-bottom:var(--space-3);"><span>📋 Egzersiz Kütüphanesi</span><span class="chevron">›</span></a>
+    <a class="more-menu-item" id="regions-link" href="#/regions" style="display:none; margin-bottom:var(--space-3);"><span>🎯 Hedef Bölgeler</span><span class="chevron">›</span></a>
     <div id="coach-body"></div>
   `;
   const headerActions = container.querySelector('#header-actions');
@@ -59,6 +60,12 @@ export async function render(container) {
     if (!allowed) return;
     const linkEl = container.querySelector('#catalog-link');
     if (!linkEl) return; // kullanıcı bu sırada başka ekrana geçmiş olabilir
+    linkEl.style.display = '';
+  });
+  canManageRegions().then((allowed) => {
+    if (!allowed) return;
+    const linkEl = container.querySelector('#regions-link');
+    if (!linkEl) return;
     linkEl.style.display = '';
   });
 

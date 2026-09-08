@@ -148,10 +148,14 @@ export async function renderRosterScreen(container, config) {
             ${item.subtitle ? `<div class="list-item-sub">${escapeHtml(item.subtitle)}</div>` : ''}
           </div>
           ${item.badge ? `<span class="badge ${escapeHtml(item.badge.className || '')}">${escapeHtml(item.badge.text)}</span>` : ''}
-          ${item.toggle ? `
-            <div class="list-item-toggle-group">
-              <span class="list-item-toggle-label">${escapeHtml(item.toggle.label)}</span>
-              <button type="button" class="settings-toggle roster-toggle-btn${item.toggle.value ? ' on' : ''}" role="switch" aria-checked="${!!item.toggle.value}" aria-label="${escapeHtml(item.toggle.label)}"></button>
+          ${item.toggles ? `
+            <div class="list-item-toggles-col">
+              ${item.toggles.map((t) => `
+                <div class="list-item-toggle-group">
+                  <span class="list-item-toggle-label">${escapeHtml(t.label)}</span>
+                  <button type="button" class="settings-toggle roster-toggle-btn${t.value ? ' on' : ''}" role="switch" aria-checked="${!!t.value}" aria-label="${escapeHtml(t.label)}" data-toggle-key="${escapeHtml(t.key)}"></button>
+                </div>
+              `).join('')}
             </div>
           ` : ''}
         </${tag}>
@@ -159,11 +163,13 @@ export async function renderRosterScreen(container, config) {
     }).join('');
   }
 
-  // Genel, opt-in bir satır-içi izin anahtarı (ör. admin'in hoca listesindeki
-  // "Kütüphane" toggle'ı) — item.toggle vermeyen hiçbir ekran (coach.html'in
-  // kendi öğrenci roster'ı dahil) bundan hiç etkilenmiyor. Satır bir <a> ise
-  // (burada değil ama genel olsun diye) tıklamanın navigasyonu tetiklememesi
-  // için stopPropagation/preventDefault var.
+  // Genel, opt-in satır-içi izin anahtarları (ör. admin'in hoca listesindeki
+  // "Kütüphane"/"Hedef Bölge" toggle'ları) — item.toggles vermeyen hiçbir ekran
+  // (coach.html'in kendi öğrenci roster'ı dahil) bundan hiç etkilenmiyor. Bir
+  // satırda birden fazla bağımsız toggle olabiliyor, data-toggle-key hangisine
+  // basıldığını onToggle'a taşıyor. Satır bir <a> ise (burada değil ama genel
+  // olsun diye) tıklamanın navigasyonu tetiklememesi için stopPropagation/
+  // preventDefault var.
   listRoot.addEventListener('click', async (e) => {
     const toggleBtn = e.target.closest('.roster-toggle-btn');
     if (!toggleBtn || !onToggle) return;
@@ -171,12 +177,13 @@ export async function renderRosterScreen(container, config) {
     e.stopPropagation();
     const row = toggleBtn.closest('.list-item');
     const id = row.dataset.id;
+    const key = toggleBtn.dataset.toggleKey;
     const next = !toggleBtn.classList.contains('on');
     toggleBtn.classList.toggle('on', next);
     toggleBtn.setAttribute('aria-checked', String(next));
     toggleBtn.disabled = true;
     try {
-      await onToggle(id, next);
+      await onToggle(id, key, next);
     } catch (err) {
       console.error('İzin güncellenemedi', err);
       toggleBtn.classList.toggle('on', !next);

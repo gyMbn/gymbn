@@ -1,11 +1,13 @@
 import { escapeHtml, ICON_TRASH, normalizeForMatch } from '../util.js';
 import { confirmSheet } from '../components/confirmSheet.js';
-import { listRegions, addRegion, renameRegion, archiveRegion } from './adminCloud.js';
 
 // exerciseCatalog.js'in aynı arama+eklemeli deseni — burada süre/video/bölge gibi
 // egzersize özgü alanlar yok, sadece isim + (otomatik atanan) renk. Renk elle
 // seçilmiyor ki kullanıcı her seferinde bir tasarım kararı vermek zorunda kalmasın.
-export async function render(container, { onBack }) {
+// exerciseCatalog.js'teki AYNI sebep: Firestore fonksiyonları burada sabit import
+// DEĞİL, çağıranın (adminApp.js veya coachApp.js) geçtiği parametreler — admin'in
+// canManageRegions toggle'ıyla izin verdiği bir hoca da AYNI bu ekranı kullanabiliyor.
+export async function render(container, { onBack, listRegions, addRegion, renameRegion, archiveRegion }) {
   container.innerHTML = `
     <div class="view-header">
       <button type="button" class="back-link" id="regions-back-btn" aria-label="Geri">←</button>

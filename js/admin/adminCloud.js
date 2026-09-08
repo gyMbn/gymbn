@@ -45,6 +45,12 @@ export async function setCoachCatalogPermission(coachUid, allowed) {
   await setDoc(doc(db, 'coaches', coachUid), { canManageCatalog: !!allowed }, { merge: true });
 }
 
+// setCoachCatalogPermission'ın aynı deseni, hedef bölge listesi için — ayrı,
+// bağımsız bir izin.
+export async function setCoachRegionsPermission(coachUid, allowed) {
+  await setDoc(doc(db, 'coaches', coachUid), { canManageRegions: !!allowed }, { merge: true });
+}
+
 export async function listPendingCoachInvites() {
   const snap = await getDocs(query(collection(db, 'coachInvites'), where('status', '==', 'pending')));
   return snap.docs.map((d) => ({ id: d.id, ...d.data() }));

@@ -1,7 +1,7 @@
 import {
   onAdminAuthReady, adminLogin, adminSignOut, adminResetPassword, isCurrentUserAdmin,
   listCatalog, addCatalogExercise, renameCatalogExercise, setCatalogMedia, archiveCatalogExercise,
-  listRegions, broadcastSystemMessage, listMyBroadcasts, deleteBroadcast,
+  listRegions, addRegion, renameRegion, archiveRegion, broadcastSystemMessage, listMyBroadcasts, deleteBroadcast,
 } from './admin/adminCloud.js';
 import { renderLoginForm } from './shared/loginForm.js';
 import { confirmSheet } from './components/confirmSheet.js';
@@ -264,5 +264,5 @@ function showCatalog() {
 }
 
 function showRegions() {
-  targetRegions.render(viewRoot, { onBack: showRoster });
+  targetRegions.render(viewRoot, { onBack: showRoster, listRegions, addRegion, renameRegion, archiveRegion });
 }

@@ -1,6 +1,7 @@
 import { renderRosterScreen } from '../roster/rosterUi.js';
 import {
-  listCoachesWithCounts, listPendingCoachInvites, createCoachInvite, cancelCoachInvite, setCoachCatalogPermission,
+  listCoachesWithCounts, listPendingCoachInvites, createCoachInvite, cancelCoachInvite,
+  setCoachCatalogPermission, setCoachRegionsPermission,
 } from './adminCloud.js';
 
 function buildInviteLink(token) {
@@ -23,9 +24,13 @@ export async function render(container) {
           id: c.id,
           title: c.displayName,
           subtitle: `${c.studentCount} öğrenci`,
-          // Güvendiğin hocaya, admin'in "Egzersiz Kütüphanesi" ekranındaki AYNI
-          // yazma iznini ver — ayrı bir liste değil, aynı paylaşılan katalog.
-          toggle: { label: 'Kütüphane', value: c.canManageCatalog === true },
+          // Güvendiğin hocaya, admin'in "Egzersiz Kütüphanesi"/"Hedef Bölgeler"
+          // ekranlarındaki AYNI yazma izinlerini ver — ikisi de ayrı bir liste
+          // değil, aynı paylaşılan koleksiyonlar; izinler birbirinden bağımsız.
+          toggles: [
+            { key: 'catalog', label: 'Kütüphane', value: c.canManageCatalog === true },
+            { key: 'regions', label: 'Hedef Bölge', value: c.canManageRegions === true },
+          ],
         }));
     },
     loadPendingInvites: async () => {
@@ -34,6 +39,6 @@ export async function render(container) {
     },
     onAdd: async (name) => ({ link: buildInviteLink(await createCoachInvite(name)) }),
     onCancelInvite: (id) => cancelCoachInvite(id),
-    onToggle: (id, allowed) => setCoachCatalogPermission(id, allowed),
+    onToggle: (id, key, allowed) => (key === 'regions' ? setCoachRegionsPermission(id, allowed) : setCoachCatalogPermission(id, allowed)),
   });
 }

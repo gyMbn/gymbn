@@ -1,7 +1,7 @@
 import {
   onCoachAuthReady, coachLogin, coachSignOut, coachResetPassword, isCurrentUserCoach,
   listCatalog, addCatalogExercise, renameCatalogExercise, setCatalogMedia, archiveCatalogExercise,
-  listRegions,
+  listRegions, addRegion, renameRegion, archiveRegion,
 } from './coach/coachCloud.js';
 import { renderLoginForm } from './shared/loginForm.js';
 import { addRoute, renderRoute } from './router.js';
@@ -12,6 +12,7 @@ import * as studentMeasurements from './coach/studentMeasurements.js';
 import * as studentPayments from './coach/studentPayments.js';
 import * as studentSchedule from './coach/studentSchedule.js';
 import * as exerciseCatalog from './admin/exerciseCatalog.js';
+import * as targetRegions from './admin/targetRegions.js';
 
 const viewRoot = document.getElementById('view-root');
 
@@ -88,6 +89,12 @@ function initCoachApp() {
     onBack: () => { location.hash = '#/'; },
     listCatalog, addCatalogExercise, renameCatalogExercise, setCatalogMedia, archiveCatalogExercise,
     listRegions,
+  }));
+  // #/catalog'la AYNI desen — admin'in canManageRegions toggle'ıyla izin verdiği
+  // hocalar için, aynı targetRegions.js ekranı, coachCloud.js'in yazma fonksiyonlarıyla.
+  addRoute(/^#\/regions$/, (root) => targetRegions.render(root, {
+    onBack: () => { location.hash = '#/'; },
+    listRegions, addRegion, renameRegion, archiveRegion,
   }));
 
   function onRouteChange() {

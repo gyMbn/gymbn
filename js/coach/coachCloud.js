@@ -10,6 +10,12 @@ import {
   doc, getDoc, setDoc, deleteDoc, collection, query, where, orderBy, limit, getDocs, addDoc, updateDoc, serverTimestamp,
 } from 'https://www.gstatic.com/firebasejs/12.17.1/firebase-firestore.js';
 
+// admin/adminCloud.js'teki AYNI palet — sadece bu dosyanın kendi addRegion()'ı için.
+const REGION_COLOR_PALETTE = [
+  '#b56b5c', '#5c8f7a', '#c9a15a', '#6b84a8', '#8a6a9c',
+  '#b58a5c', '#6f8a8f', '#8b8f98', '#a3684f', '#4f7a6b',
+];
+
 export function onCoachAuthReady(callback) {
   return onAuthStateChanged(auth, callback);
 }
@@ -139,13 +145,50 @@ export async function archiveCatalogExercise(id) {
   await setDoc(doc(db, 'exerciseCatalog', id), { archived: true }, { merge: true });
 }
 
-// targetRegions: liste hâlâ SADECE admin'de yönetiliyor (ekleme/yeniden adlandırma/
-// arşivleme), ama canManageCatalog izni verilen bir hoca video/hedef-bölge sheet'inin
-// çip listesini doldurmak için bu koleksiyonu OKUYABİLMELİ — yoksa o sheet o hoca için
-// boş/kırık görünür (bkz. firestore.rules).
+// targetRegions: okuma her hocada açık (canManageCatalog izni olan bir hoca
+// video/hedef-bölge sheet'inin çip listesini doldurmak için bu koleksiyonu
+// OKUYABİLMELİ — yoksa o sheet o hoca için boş/kırık görünür, bkz. firestore.rules).
 export async function listRegions() {
   const snap = await getDocs(collection(db, 'targetRegions'));
   return snap.docs.map((d) => ({ id: d.id, ...d.data() })).filter((r) => !r.archived).sort((a, b) => a.name.localeCompare(b.name, 'tr'));
+}
+
+// Ayarlar/roster ekranındaki "Hedef Bölgeler" linkinin görünüp görünmeyeceğini
+// belirlemek için — canManageCatalog()'un aynı deseni, ayrı bir bayrak.
+export async function canManageRegions() {
+  const user = auth.currentUser;
+  if (!user) return false;
+  try {
+    const snap = await getDoc(doc(db, 'coaches', user.uid));
+    return snap.exists() && snap.data().canManageRegions === true;
+  } catch (err) {
+    console.error('Hedef bölge yetkisi kontrol edilemedi', err);
+    return false;
+  }
+}
+
+// admin/adminCloud.js'teki AYNI 3 fonksiyon — sadece bu dosyanın kendi `db`'siyle
+// (bkz. dosya başı). canManageRegions izni verilmemiş bir hocada firestore.rules
+// zaten reddeder, buradaki fonksiyonların kendisi bir yetki kontrolü YAPMIYOR.
+export async function addRegion(name) {
+  const existing = await listRegions();
+  const id = crypto.randomUUID();
+  const color = REGION_COLOR_PALETTE[existing.length % REGION_COLOR_PALETTE.length];
+  await setDoc(doc(db, 'targetRegions', id), {
+    name: name.trim(),
+    color,
+    archived: false,
+    createdAt: serverTimestamp(),
+  });
+  return { id, color };
+}
+
+export async function renameRegion(id, name) {
+  await setDoc(doc(db, 'targetRegions', id), { name: name.trim() }, { merge: true });
+}
+
+export async function archiveRegion(id) {
+  await setDoc(doc(db, 'targetRegions', id), { archived: true }, { merge: true });
 }
 
 /* ---------- Uygulama içi bildirimler ---------- */

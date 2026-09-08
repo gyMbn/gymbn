@@ -638,8 +638,20 @@ input:focus, select:focus, textarea:focus {
   flex-shrink: 0;
 }
 
-/* Roster satırındaki opsiyonel izin anahtarı (ör. admin'in hoca listesindeki
-   "Kütüphane" toggle'ı) — rosterUi.js'in item.toggle hook'u, opt-in. */
+/* Roster satırındaki opsiyonel izin anahtarları (ör. admin'in hoca listesindeki
+   "Kütüphane"/"Hedef Bölge" toggle'ları) — rosterUi.js'in item.toggles hook'u,
+   opt-in. Birden fazla toggle YAN YANA değil ALT ALTA — iki tanesi yan yana
+   dursaydı isim alanına neredeyse hiç yer kalmıyordu (bkz. bu düzeltmenin
+   geldiği test), tek toggle'lı ekranlarda (bugün için sadece bu roster) da
+   tek satırlık sütun aynı şekilde çalışıyor. */
+.list-item-toggles-col {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
 .list-item-toggle-group {
   display: flex;
   align-items: center;
